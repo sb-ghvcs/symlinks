@@ -117,7 +117,7 @@ jobs:
           Write-Host "sourcePath: $sourcePath"
           Write-Host "outputPath: $outputPath"
 
-          Check if the output path is a shortcut
+          # Check if the output path is a shortcut
           if (Test-Path $outputPath -PathType Leaf) {
             $shell = New-Object -ComObject WScript.Shell
             $shortcut = $shell.CreateShortcut($outputPath)
