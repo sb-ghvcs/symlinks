@@ -1,5 +1,5 @@
 {
-  "name": "symlinks",
+  "name": "actions-symlinks",
   "description": "GitHub Action to create symlinks or shortcuts for self-hosted runners",
   "version": "v0.0.1",
   "author": "work@shivanshbakshi.dev",
