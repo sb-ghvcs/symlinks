@@ -125,5 +125,6 @@ jobs:
             }
           } else {
             Write-Host "The output path $outputPath does not exist or is not a file."
+            Get-ChildItem -Path "." -File
             exit 1
           }
