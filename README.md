@@ -9,3 +9,10 @@ creating hardlinks. Feel free to suggest improvements with PRs
 
 - Linux
 - Windows
+
+## Reference
+
+The windows implementaion utilizes the VB Script created by
+[nwutils](https://github.com/nwutils) in their package
+[create-desktop-shortcuts](https://github.com/nwutils/create-desktop-shortcuts)
+and heavily draws on it's input pattern
