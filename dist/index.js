@@ -25634,12 +25634,188 @@ module.exports = {
 
 /***/ }),
 
+/***/ 1189:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+const { isexe, sync: isexeSync } = __nccwpck_require__(4585)
+const { join, delimiter, sep, posix } = __nccwpck_require__(6928)
+
+const isWindows = process.platform === 'win32'
+
+// used to check for slashed in commands passed in. always checks for the posix
+// seperator on all platforms, and checks for the current separator when not on
+// a posix platform. don't use the isWindows check for this since that is mocked
+// in tests but we still need the code to actually work when called. that is also
+// why it is ignored from coverage.
+/* istanbul ignore next */
+const rSlash = new RegExp(`[${posix.sep}${sep === posix.sep ? '' : sep}]`.replace(/(\\)/g, '\\$1'))
+const rRel = new RegExp(`^\\.${rSlash.source}`)
+
+const getNotFoundError = (cmd) =>
+  Object.assign(new Error(`not found: ${cmd}`), { code: 'ENOENT' })
+
+const getPathInfo = (cmd, {
+  path: optPath = process.env.PATH,
+  pathExt: optPathExt = process.env.PATHEXT,
+  delimiter: optDelimiter = delimiter,
+}) => {
+  // If it has a slash, then we don't bother searching the pathenv.
+  // just check the file itself, and that's it.
+  const pathEnv = cmd.match(rSlash) ? [''] : [
+    // windows always checks the cwd first
+    ...(isWindows ? [process.cwd()] : []),
+    ...(optPath || /* istanbul ignore next: very unusual */ '').split(optDelimiter),
+  ]
+
+  if (isWindows) {
+    const pathExtExe = optPathExt ||
+      ['.EXE', '.CMD', '.BAT', '.COM'].join(optDelimiter)
+    const pathExt = pathExtExe.split(optDelimiter).flatMap((item) => [item, item.toLowerCase()])
+    if (cmd.includes('.') && pathExt[0] !== '') {
+      pathExt.unshift('')
+    }
+    return { pathEnv, pathExt, pathExtExe }
+  }
+
+  return { pathEnv, pathExt: [''] }
+}
+
+const getPathPart = (raw, cmd) => {
+  const pathPart = /^".*"$/.test(raw) ? raw.slice(1, -1) : raw
+  const prefix = !pathPart && rRel.test(cmd) ? cmd.slice(0, 2) : ''
+  return prefix + join(pathPart, cmd)
+}
+
+const which = async (cmd, opt = {}) => {
+  const { pathEnv, pathExt, pathExtExe } = getPathInfo(cmd, opt)
+  const found = []
+
+  for (const envPart of pathEnv) {
+    const p = getPathPart(envPart, cmd)
+
+    for (const ext of pathExt) {
+      const withExt = p + ext
+      const is = await isexe(withExt, { pathExt: pathExtExe, ignoreErrors: true })
+      if (is) {
+        if (!opt.all) {
+          return withExt
+        }
+        found.push(withExt)
+      }
+    }
+  }
+
+  if (opt.all && found.length) {
+    return found
+  }
+
+  if (opt.nothrow) {
+    return null
+  }
+
+  throw getNotFoundError(cmd)
+}
+
+const whichSync = (cmd, opt = {}) => {
+  const { pathEnv, pathExt, pathExtExe } = getPathInfo(cmd, opt)
+  const found = []
+
+  for (const pathEnvPart of pathEnv) {
+    const p = getPathPart(pathEnvPart, cmd)
+
+    for (const ext of pathExt) {
+      const withExt = p + ext
+      const is = isexeSync(withExt, { pathExt: pathExtExe, ignoreErrors: true })
+      if (is) {
+        if (!opt.all) {
+          return withExt
+        }
+        found.push(withExt)
+      }
+    }
+  }
+
+  if (opt.all && found.length) {
+    return found
+  }
+
+  if (opt.nothrow) {
+    return null
+  }
+
+  throw getNotFoundError(cmd)
+}
+
+module.exports = which
+which.sync = whichSync
+
+
+/***/ }),
+
 /***/ 6513:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getParentDirectory = getParentDirectory;
+exports.resolvePATH = resolvePATH;
+const which_1 = __importDefault(__nccwpck_require__(1189));
+const path_1 = __importDefault(__nccwpck_require__(6928));
+const fs = __importStar(__nccwpck_require__(9896));
+function getParentDirectory(inputPath) {
+    // Check if the input path exists
+    if (!fs.existsSync(inputPath)) {
+        throw new Error('Path does not exist');
+    }
+    // Check if the input path is a directory
+    if (fs.statSync(inputPath).isDirectory()) {
+        return inputPath;
+    }
+    // If it's a file, return the parent directory
+    return path_1.default.dirname(inputPath);
+}
+function resolvePATH(filePath) {
+    if (filePath) {
+        return which_1.default.sync(filePath, { nothrow: true }) || filePath;
+    }
+    return filePath;
+}
+
+
+/***/ }),
+
+/***/ 5432:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
@@ -25664,69 +25840,167 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.directoryExistsSync = directoryExistsSync;
-exports.existsSync = existsSync;
-exports.fileExistsSync = fileExistsSync;
-const fs = __importStar(__nccwpck_require__(9896));
-function directoryExistsSync(path, required) {
-    if (!path) {
-        throw new Error("Arg 'path' must not be empty");
+exports.InputHelper = void 0;
+const core = __importStar(__nccwpck_require__(7484));
+const windows_helper_1 = __nccwpck_require__(1824);
+const linux_helper_1 = __nccwpck_require__(2205);
+const fs_helper_1 = __nccwpck_require__(6513);
+const fs_1 = __nccwpck_require__(9896);
+const platform_1 = __nccwpck_require__(8968);
+class InputHelper {
+    static getCommonInputs(result) {
+        result.symlinkName = core.getInput('symlink-name');
+        const comment = core.getInput('comment');
+        if (comment.length === 0) {
+            result.comment = undefined;
+        }
+        else {
+            result.comment = comment;
+        }
+        const shortcutArguments = core.getInput('arguments');
+        if (shortcutArguments.length === 0) {
+            result.arguments = undefined;
+        }
+        else {
+            result.arguments = shortcutArguments;
+        }
+        return result;
     }
-    let stats;
-    try {
-        stats = fs.statSync(path);
-    }
-    catch (error) {
-        if (error?.code === 'ENOENT') {
-            if (!required) {
-                return false;
+    static getWindowsInputs(result) {
+        const windowsHelper = new windows_helper_1.WindowsHelper();
+        const sourcePath = core.getInput('source-path');
+        const validatedSourcePath = windowsHelper.getResolvedPath(sourcePath);
+        result.sourcePath = validatedSourcePath;
+        const destinationDirectory = core.getInput('destination-directory');
+        const validatedDestinationDirectory = windowsHelper.getResolvedPath(destinationDirectory);
+        result.destinationDirectory = validatedDestinationDirectory;
+        const sourceDirectory = (0, fs_helper_1.getParentDirectory)(validatedSourcePath);
+        const iconPath = core.getInput('icon-path');
+        if (iconPath.length === 0) {
+            result.iconPath = undefined;
+        }
+        else {
+            const validatedIconPath = windowsHelper.getIcon(iconPath, sourceDirectory);
+            result.iconPath = validatedIconPath;
+        }
+        const windowMode = core.getInput('window-mode');
+        if (windowMode !== 'normal' &&
+            windowMode !== 'maximized' &&
+            windowMode !== 'minimized') {
+            throw new Error(`Invalid input: window-mode must be "normal", "maximized", or "minimized".`);
+        }
+        result.windowMode = windowMode;
+        const hotKey = core.getInput('hot-key');
+        if (hotKey.length === 0) {
+            result.hotKey = undefined;
+        }
+        else {
+            result.hotKey = hotKey;
+        }
+        const workingDirectory = core.getInput('working-directory');
+        if (workingDirectory.length === 0) {
+            result.workingDirectory = undefined;
+        }
+        else {
+            const validatedWorkingDirectory = windowsHelper.getResolvedPath(workingDirectory);
+            if (!(0, fs_1.lstatSync)(validatedWorkingDirectory).isDirectory()) {
+                throw new Error(`Invalid working-directory: ${validatedWorkingDirectory} must be a valid directory.`);
             }
-            throw new Error(`Directory '${path}' does not exist`);
+            result.workingDirectory = validatedWorkingDirectory;
         }
-        throw new Error(`Encountered an error when checking whether path '${path}' exists: ${error?.message ?? error}`);
+        return result;
     }
-    if (stats.isDirectory()) {
-        return true;
-    }
-    else if (!required) {
-        return false;
-    }
-    throw new Error(`Directory '${path}' does not exist`);
-}
-function existsSync(path) {
-    if (!path) {
-        throw new Error("Arg 'path' must not be empty");
-    }
-    try {
-        fs.statSync(path);
-    }
-    catch (error) {
-        if (error?.code === 'ENOENT') {
-            return false;
+    static getLinuxInputs(result) {
+        const linuxHelper = new linux_helper_1.LinuxHelper();
+        const sourcePath = core.getInput('source-path');
+        const shortcutType = core.getInput('type');
+        const validatedSourcePath = linuxHelper.getResolvedPath(sourcePath, shortcutType);
+        result.sourcePath = validatedSourcePath;
+        const destinationDirectory = core.getInput('destination-directory');
+        const validatedDestinationDirectory = linuxHelper.getResolvedPath(destinationDirectory);
+        result.destinationDirectory = validatedDestinationDirectory;
+        const sourceDirectory = (0, fs_helper_1.getParentDirectory)(validatedSourcePath);
+        const iconPath = core.getInput('icon-path');
+        if (iconPath.length === 0) {
+            result.iconPath = undefined;
         }
-        throw new Error(`Encountered an error when checking whether path '${path}' exists: ${error?.message ?? error}`);
-    }
-    return true;
-}
-function fileExistsSync(path) {
-    if (!path) {
-        throw new Error("Arg 'path' must not be empty");
-    }
-    let stats;
-    try {
-        stats = fs.statSync(path);
-    }
-    catch (error) {
-        if (error?.code === 'ENOENT') {
-            return false;
+        else {
+            const validatedIconPath = linuxHelper.getIcon(iconPath, sourceDirectory);
+            result.iconPath = validatedIconPath;
         }
-        throw new Error(`Encountered an error when checking whether path '${path}' exists: ${error?.message ?? error}`);
+        result.type = shortcutType;
+        result.terminal = core.getBooleanInput('terminal');
+        result.chmod = core.getBooleanInput('chmod');
+        return result;
     }
-    if (!stats.isDirectory()) {
-        return true;
+    static getInputs() {
+        let result = {};
+        result = InputHelper.getCommonInputs(result);
+        if (platform_1.isWindows) {
+            result = InputHelper.getWindowsInputs(result);
+        }
+        else if (platform_1.isLinux) {
+            result = InputHelper.getLinuxInputs(result);
+        }
+        return result;
     }
-    return false;
 }
+exports.InputHelper = InputHelper;
+
+
+/***/ }),
+
+/***/ 5625:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.log = void 0;
+const core = __importStar(__nccwpck_require__(7484));
+class Logger {
+    infoLogger;
+    debugLogger;
+    errorLogger;
+    constructor(infoLogger = console.log, debugLogger = console.debug, errorLogger = console.error) {
+        this.infoLogger = infoLogger;
+        this.debugLogger = debugLogger;
+        this.errorLogger = errorLogger;
+    }
+    info(message) {
+        this.infoLogger(message);
+    }
+    debug(message) {
+        this.debugLogger(message);
+    }
+    error(message) {
+        this.errorLogger(message);
+    }
+}
+exports.log = new Logger(core.info, core.debug, core.error);
 
 
 /***/ }),
@@ -25763,16 +26037,15 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = run;
 const core = __importStar(__nccwpck_require__(7484));
 const symlink_1 = __nccwpck_require__(3428);
+const input_helper_1 = __nccwpck_require__(5432);
 /**
  * The main function for the action.
  * @returns {Promise<void>} Resolves when the action is complete.
  */
 async function run() {
     try {
-        const sourcePath = core.getInput('source-path');
-        const destinationPath = core.getInput('destination-path');
-        const override = core.getBooleanInput('override');
-        const { source, destination } = await (0, symlink_1.symlink)(sourcePath, destinationPath, override);
+        const inputSettings = input_helper_1.InputHelper.getInputs();
+        const { source, destination } = await (0, symlink_1.symlink)(inputSettings);
         // Set outputs for other workflow steps to use
         core.setOutput('source-path', source);
         core.setOutput('output-path', destination);
@@ -25787,7 +26060,93 @@ async function run() {
 
 /***/ }),
 
-/***/ 3566:
+/***/ 2205:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.LinuxHelper = void 0;
+const fs_1 = __nccwpck_require__(9896);
+const path_1 = __importDefault(__nccwpck_require__(6928));
+const fs_helper_1 = __nccwpck_require__(6513);
+const log_1 = __nccwpck_require__(5625);
+const os_helper_1 = __nccwpck_require__(6071);
+class LinuxHelper {
+    getResolvedPath(filePath, type) {
+        const substitudedPath = (0, os_helper_1.resolveTilde)(filePath);
+        if (!substitudedPath) {
+            throw new Error(`Could not resolve path. Make sure filepath ${filePath} is valid`);
+        }
+        const resolvedPath = (0, fs_helper_1.resolvePATH)(substitudedPath);
+        const resolvedType = this.getType(resolvedPath, type);
+        if (resolvedType === 'Application') {
+            if (!(0, fs_1.existsSync)(resolvedPath)) {
+                throw new Error(`Could not find file: ${resolvedPath}`);
+            }
+            if ((0, fs_1.lstatSync)(resolvedPath).isDirectory()) {
+                throw new Error(`${resolvedPath} is a directory. Please provide a file path instead.`);
+            }
+        }
+        else if (resolvedType === 'Directory') {
+            if (!(0, fs_1.existsSync)(resolvedPath)) {
+                throw new Error(`Could not find directory: ${resolvedPath}`);
+            }
+            if (!(0, fs_1.lstatSync)(resolvedPath).isDirectory()) {
+                throw new Error(`${resolvedPath} is a file. Please provide a directory path instead.`);
+            }
+        }
+        return (0, fs_helper_1.resolvePATH)(substitudedPath);
+    }
+    getIcon(iconPath, sourceDirectory = '') {
+        let resolvedPath = (0, os_helper_1.resolveTilde)(iconPath);
+        if (!resolvedPath) {
+            log_1.log.error(`Could not resolve path. Make sure icon ${iconPath} is valid`);
+            return undefined;
+        }
+        if (!path_1.default.isAbsolute(resolvedPath)) {
+            const parsedSourceDirectory = path_1.default.parse(sourceDirectory).dir;
+            resolvedPath = path_1.default.join(parsedSourceDirectory, resolvedPath);
+            if (!(0, fs_1.existsSync)(resolvedPath)) {
+                log_1.log.error(`Could not find icon: ${resolvedPath}`);
+                return undefined;
+            }
+        }
+        if (!iconPath.endsWith('.png') && !iconPath.endsWith('.icns')) {
+            log_1.log.error(`Invalid icon: ${resolvedPath}. File must be PNG or ICNS`);
+            return undefined;
+        }
+        if (!(0, fs_1.existsSync)(resolvedPath)) {
+            log_1.log.error(`Could not find icon: ${resolvedPath}`);
+            return undefined;
+        }
+        return resolvedPath;
+    }
+    getType(filePath, type) {
+        if (!type) {
+            if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+                return 'Link';
+            }
+            else if ((0, fs_1.existsSync)(filePath) && (0, fs_1.lstatSync)(filePath).isDirectory()) {
+                return 'Directory';
+            }
+            return 'Application';
+        }
+        if (type !== 'Link' && type !== 'Directory' && type !== 'Application') {
+            return 'Application';
+        }
+        return type;
+    }
+}
+exports.LinuxHelper = LinuxHelper;
+
+
+/***/ }),
+
+/***/ 6071:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -25816,122 +26175,143 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.isLinux = isLinux;
-exports.isWindows = isWindows;
+exports.resolveTilde = resolveTilde;
+exports.resolveEnvironmentVariables = resolveEnvironmentVariables;
 const os = __importStar(__nccwpck_require__(857));
-function isLinux() {
-    return os.platform() === 'linux';
+function resolveTilde(filePath) {
+    if (!filePath || typeof filePath !== 'string') {
+        return undefined;
+    }
+    // '~/folder/path' or '~' not '~alias/folder/path'
+    if (filePath.startsWith('~/') || filePath === '~') {
+        return filePath.replace('~', os.homedir());
+    }
+    return filePath;
 }
-function isWindows() {
-    return os.platform() === 'win32';
+function resolveEnvironmentVariables(filePath) {
+    if (!filePath || typeof filePath !== 'string') {
+        return undefined;
+    }
+    function replaceEnvironmentVariable(withPercents, withoutPercents) {
+        let found = process.env[withoutPercents];
+        // 'C:\Users\%USERNAME%\Desktop\%asdf%' => 'C:\Users\bob\Desktop\%asdf%'
+        return found || withPercents;
+    }
+    // 'C:\Users\%USERNAME%\Desktop\%PROCESSOR_ARCHITECTURE%' => 'C:\Users\bob\Desktop\AMD64'
+    filePath = filePath.replace(/%([^%]+)%/g, replaceEnvironmentVariable);
+    return filePath;
 }
 
 
 /***/ }),
 
-/***/ 3428:
+/***/ 1824:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.symlink = symlink;
-const core = __importStar(__nccwpck_require__(7484));
-const fs = __importStar(__nccwpck_require__(9896));
-const path = __importStar(__nccwpck_require__(6928));
-const os_helper_1 = __nccwpck_require__(3566);
+exports.WindowsHelper = void 0;
+const fs_1 = __nccwpck_require__(9896);
+const path_1 = __importDefault(__nccwpck_require__(6928));
 const fs_helper_1 = __nccwpck_require__(6513);
-/**
- * Create a symlink from one path to another.
- * @param sourcePath The path to create a symlink for
- * @param destinationPath The path to the desired symlink
- * @returns {Promise<string>} Resolves with absolute path to the created symlink.
- */
-async function symlink(sourcePath, destinationPath, override = false) {
+const log_1 = __nccwpck_require__(5625);
+const os_helper_1 = __nccwpck_require__(6071);
+class WindowsHelper {
+    getResolvedPath(filePath) {
+        const substitudedPath = (0, os_helper_1.resolveEnvironmentVariables)(filePath);
+        if (!substitudedPath) {
+            throw new Error(`Could not resolve path. Make sure filepath ${filePath} is valid`);
+        }
+        const resolvedPath = (0, fs_helper_1.resolvePATH)(substitudedPath);
+        if (!(0, fs_1.existsSync)(resolvedPath)) {
+            throw new Error(`Could not find path: ${resolvedPath}`);
+        }
+        return resolvedPath;
+    }
+    getIcon(iconPath, sourceDirectory = '') {
+        let resolvedPath = (0, os_helper_1.resolveEnvironmentVariables)(iconPath);
+        if (!resolvedPath) {
+            log_1.log.error(`Could not resolve path. Make sure icon ${iconPath} is valid`);
+            return undefined;
+        }
+        if (!path_1.default.win32.isAbsolute(resolvedPath)) {
+            let parsedSourceDirectory = sourceDirectory;
+            if (path_1.default.sep !== '\\') {
+                parsedSourceDirectory = sourceDirectory.split('\\').join('/');
+                resolvedPath = resolvedPath.split('\\').join('/');
+            }
+            parsedSourceDirectory = path_1.default.parse(parsedSourceDirectory).dir;
+            resolvedPath = path_1.default.join(parsedSourceDirectory, resolvedPath);
+        }
+        let iconPattern = /^.*(?:\.exe|\.ico|\.dll)(?:,\d*)?$/m;
+        if (!RegExp(iconPattern).test(iconPath)) {
+            log_1.log.error('Windows ICON must be ICO, EXE, or DLL File. It may be followed by a comma and icon index value, like: "C:\\file.exe,0"');
+            return undefined;
+        }
+        function removeIconIndex(icon) {
+            // 'C:\\file.dll,0' => 'dll,0'
+            const extension = path_1.default.parse(icon).ext;
+            // 'dll,0' => ['dll', '0'] => 'dll'
+            const cleaned = extension.split(',')[0];
+            // 'C:\\file.dll,0' => 'C:\\file.dll'
+            return icon.replace(extension, cleaned);
+        }
+        if (!resolvedPath) {
+            return undefined;
+        }
+        if (!(0, fs_1.existsSync)(removeIconIndex(resolvedPath))) {
+            log_1.log.error(`Could not find icon: ${resolvedPath}`);
+            return undefined;
+        }
+        return resolvedPath;
+    }
+}
+exports.WindowsHelper = WindowsHelper;
+
+
+/***/ }),
+
+/***/ 3428:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.symlink = symlink;
+const platform_1 = __nccwpck_require__(8968);
+async function symlink(settings) {
     return new Promise((resolve, reject) => {
-        if (!sourcePath || !destinationPath) {
-            reject('Source and destination paths must not be empty');
-        }
-        const absoluteSourcePath = path.resolve(sourcePath);
-        const absoluteDestPath = path.resolve(destinationPath);
-        const parentDir = path.dirname(absoluteDestPath);
-        if (!(0, fs_helper_1.directoryExistsSync)(parentDir, true)) {
-            fs.mkdirSync(parentDir, { recursive: true });
-        }
-        if ((0, fs_helper_1.existsSync)(absoluteDestPath)) {
-            core.debug(`Destination path '${absoluteDestPath}' already exists`);
-            const stats = fs.lstatSync(absoluteDestPath);
-            if (stats.isSymbolicLink() ||
-                ((0, os_helper_1.isWindows)() && path.extname(absoluteDestPath) === '.lnk')) {
-                const existingTarget = fs.readlinkSync(absoluteDestPath);
-                if (existingTarget === absoluteSourcePath) {
-                    resolve({ source: absoluteSourcePath, destination: absoluteDestPath });
-                }
-                else if (override) {
-                    fs.unlinkSync(absoluteDestPath);
-                }
-                else {
-                    reject(`Destination path '${absoluteDestPath}' already exists and does not point to the source path`);
-                }
+        try {
+            if (platform_1.isLinux) {
+                resolve(createLinuxSymlink(settings));
             }
-            else if (!override) {
-                reject(`Destination path '${absoluteDestPath}' already exists`);
+            else if (platform_1.isWindows) {
+                resolve(createWindowsSymlink(settings));
+            }
+            else {
+                reject('Unsupported platform. Only Windows and Linux are supported');
             }
         }
-        if ((0, os_helper_1.isLinux)()) {
-            core.debug(`Creating linux symlink for ${absoluteSourcePath} to ${absoluteDestPath}`);
-            fs.symlinkSync(absoluteSourcePath, absoluteDestPath);
+        catch (error) {
+            reject(error);
         }
-        else if ((0, os_helper_1.isWindows)()) {
-            core.debug(`Creating windows shortcut for ${absoluteSourcePath} to ${absoluteDestPath}`);
-            const command = `mklink "${absoluteDestPath}" "${absoluteSourcePath}"`;
-            core.debug(`Running command: ${command}`);
-            // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-            const exec = (__nccwpck_require__(5317).exec);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            exec(command, (err, stdout, stderr) => {
-                if (err) {
-                    core.error(`Error creating symlink: ${err.message}`);
-                    reject(err);
-                }
-                else if (stderr) {
-                    core.error(`Error creating symlink: ${stderr}`);
-                    reject(new Error(stderr));
-                }
-                else {
-                    core.debug(`stdout: ${stdout}`);
-                    resolve({ source: absoluteSourcePath, destination: absoluteDestPath });
-                }
-            });
-        }
-        else {
-            reject('Unsupported OS');
-        }
-        resolve({ source: absoluteSourcePath, destination: absoluteDestPath });
     });
+}
+function createLinuxSymlink(settings) {
+    return {
+        source: settings.sourcePath,
+        destination: `${settings.destinationDirectory}/${settings.symlinkName}`
+    };
+}
+function createWindowsSymlink(settings) {
+    return {
+        source: settings.sourcePath,
+        destination: `${settings.destinationDirectory}/${settings.symlinkName}`
+    };
 }
 
 
@@ -26006,6 +26386,14 @@ module.exports = require("events");
 
 "use strict";
 module.exports = require("fs");
+
+/***/ }),
+
+/***/ 1943:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("fs/promises");
 
 /***/ }),
 
@@ -27799,6 +28187,212 @@ function parseParams (str) {
 
 module.exports = parseParams
 
+
+/***/ }),
+
+/***/ 4585:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.sync = exports.isexe = exports.posix = exports.win32 = void 0;
+const posix = __importStar(__nccwpck_require__(6098));
+exports.posix = posix;
+const win32 = __importStar(__nccwpck_require__(1078));
+exports.win32 = win32;
+__exportStar(__nccwpck_require__(6835), exports);
+const platform = process.env._ISEXE_TEST_PLATFORM_ || process.platform;
+const impl = platform === 'win32' ? win32 : posix;
+/**
+ * Determine whether a path is executable on the current platform.
+ */
+exports.isexe = impl.isexe;
+/**
+ * Synchronously determine whether a path is executable on the
+ * current platform.
+ */
+exports.sync = impl.sync;
+//# sourceMappingURL=index.js.map
+
+/***/ }),
+
+/***/ 6835:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+//# sourceMappingURL=options.js.map
+
+/***/ }),
+
+/***/ 6098:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+/**
+ * This is the Posix implementation of isexe, which uses the file
+ * mode and uid/gid values.
+ *
+ * @module
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.sync = exports.isexe = void 0;
+const fs_1 = __nccwpck_require__(9896);
+const promises_1 = __nccwpck_require__(1943);
+/**
+ * Determine whether a path is executable according to the mode and
+ * current (or specified) user and group IDs.
+ */
+const isexe = async (path, options = {}) => {
+    const { ignoreErrors = false } = options;
+    try {
+        return checkStat(await (0, promises_1.stat)(path), options);
+    }
+    catch (e) {
+        const er = e;
+        if (ignoreErrors || er.code === 'EACCES')
+            return false;
+        throw er;
+    }
+};
+exports.isexe = isexe;
+/**
+ * Synchronously determine whether a path is executable according to
+ * the mode and current (or specified) user and group IDs.
+ */
+const sync = (path, options = {}) => {
+    const { ignoreErrors = false } = options;
+    try {
+        return checkStat((0, fs_1.statSync)(path), options);
+    }
+    catch (e) {
+        const er = e;
+        if (ignoreErrors || er.code === 'EACCES')
+            return false;
+        throw er;
+    }
+};
+exports.sync = sync;
+const checkStat = (stat, options) => stat.isFile() && checkMode(stat, options);
+const checkMode = (stat, options) => {
+    const myUid = options.uid ?? process.getuid?.();
+    const myGroups = options.groups ?? process.getgroups?.() ?? [];
+    const myGid = options.gid ?? process.getgid?.() ?? myGroups[0];
+    if (myUid === undefined || myGid === undefined) {
+        throw new Error('cannot get uid or gid');
+    }
+    const groups = new Set([myGid, ...myGroups]);
+    const mod = stat.mode;
+    const uid = stat.uid;
+    const gid = stat.gid;
+    const u = parseInt('100', 8);
+    const g = parseInt('010', 8);
+    const o = parseInt('001', 8);
+    const ug = u | g;
+    return !!(mod & o ||
+        (mod & g && groups.has(gid)) ||
+        (mod & u && uid === myUid) ||
+        (mod & ug && myUid === 0));
+};
+//# sourceMappingURL=posix.js.map
+
+/***/ }),
+
+/***/ 1078:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+/**
+ * This is the Windows implementation of isexe, which uses the file
+ * extension and PATHEXT setting.
+ *
+ * @module
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.sync = exports.isexe = void 0;
+const fs_1 = __nccwpck_require__(9896);
+const promises_1 = __nccwpck_require__(1943);
+/**
+ * Determine whether a path is executable based on the file extension
+ * and PATHEXT environment variable (or specified pathExt option)
+ */
+const isexe = async (path, options = {}) => {
+    const { ignoreErrors = false } = options;
+    try {
+        return checkStat(await (0, promises_1.stat)(path), path, options);
+    }
+    catch (e) {
+        const er = e;
+        if (ignoreErrors || er.code === 'EACCES')
+            return false;
+        throw er;
+    }
+};
+exports.isexe = isexe;
+/**
+ * Synchronously determine whether a path is executable based on the file
+ * extension and PATHEXT environment variable (or specified pathExt option)
+ */
+const sync = (path, options = {}) => {
+    const { ignoreErrors = false } = options;
+    try {
+        return checkStat((0, fs_1.statSync)(path), path, options);
+    }
+    catch (e) {
+        const er = e;
+        if (ignoreErrors || er.code === 'EACCES')
+            return false;
+        throw er;
+    }
+};
+exports.sync = sync;
+const checkPathExt = (path, options) => {
+    const { pathExt = process.env.PATHEXT || '' } = options;
+    const peSplit = pathExt.split(';');
+    if (peSplit.indexOf('') !== -1) {
+        return true;
+    }
+    for (let i = 0; i < peSplit.length; i++) {
+        const p = peSplit[i].toLowerCase();
+        const ext = path.substring(path.length - p.length).toLowerCase();
+        if (p && ext === p) {
+            return true;
+        }
+    }
+    return false;
+};
+const checkStat = (stat, path, options) => stat.isFile() && checkPathExt(path, options);
+//# sourceMappingURL=win32.js.map
 
 /***/ })
 

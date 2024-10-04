@@ -1,85 +1,25 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
+import which from 'which'
+import path from 'path'
 import * as fs from 'fs'
 
-export function directoryExistsSync(path: string, required?: boolean): boolean {
-  if (!path) {
-    throw new Error("Arg 'path' must not be empty")
+export function getParentDirectory(inputPath: string): string {
+  // Check if the input path exists
+  if (!fs.existsSync(inputPath)) {
+    throw new Error('Path does not exist')
   }
 
-  let stats: fs.Stats
-  try {
-    stats = fs.statSync(path)
-  } catch (error) {
-    if ((error as any)?.code === 'ENOENT') {
-      if (!required) {
-        return false
-      }
-
-      throw new Error(`Directory '${path}' does not exist`)
-    }
-
-    throw new Error(
-      `Encountered an error when checking whether path '${path}' exists: ${
-        (error as any)?.message ?? error
-      }`
-    )
+  // Check if the input path is a directory
+  if (fs.statSync(inputPath).isDirectory()) {
+    return inputPath
   }
 
-  if (stats.isDirectory()) {
-    return true
-  } else if (!required) {
-    return false
-  }
-
-  throw new Error(`Directory '${path}' does not exist`)
+  // If it's a file, return the parent directory
+  return path.dirname(inputPath)
 }
 
-export function existsSync(path: string): boolean {
-  if (!path) {
-    throw new Error("Arg 'path' must not be empty")
+export function resolvePATH(filePath: string): string {
+  if (filePath) {
+    return which.sync(filePath, { nothrow: true }) || filePath
   }
-
-  try {
-    fs.statSync(path)
-  } catch (error) {
-    if ((error as any)?.code === 'ENOENT') {
-      return false
-    }
-
-    throw new Error(
-      `Encountered an error when checking whether path '${path}' exists: ${
-        (error as any)?.message ?? error
-      }`
-    )
-  }
-
-  return true
-}
-
-export function fileExistsSync(path: string): boolean {
-  if (!path) {
-    throw new Error("Arg 'path' must not be empty")
-  }
-
-  let stats: fs.Stats
-  try {
-    stats = fs.statSync(path)
-  } catch (error) {
-    if ((error as any)?.code === 'ENOENT') {
-      return false
-    }
-
-    throw new Error(
-      `Encountered an error when checking whether path '${path}' exists: ${
-        (error as any)?.message ?? error
-      }`
-    )
-  }
-
-  if (!stats.isDirectory()) {
-    return true
-  }
-
-  return false
+  return filePath
 }

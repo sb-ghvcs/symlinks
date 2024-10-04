@@ -12,11 +12,58 @@ inputs:
   source-path:
     description: 'The source path to create the symlink or shortcut for'
     required: true
-  destination-path:
-    description: 'The destination path to create the symlink or shortcut to'
+  destination-directory:
+    description:
+      'The destination directory where you want to create the symlink'
     required: true
-  override:
-    description: 'Override whatever is at destination path if it exists'
+  symlink-name:
+    description: 'The name of the symlink or shortcut'
+    required: true
+  comment:
+    description:
+      'Metadata file "comment" property. Description of what the shortcut would
+      open.'
+    required: false
+    default: ''
+  icon-path:
+    description: 'Image shown on the shortcut icon'
+    required: false
+    default: ''
+  arguments:
+    description: ' Additional arguments passed in to the end of your target'
+    required: false
+    default: ''
+  window-mode:
+    description:
+      '[WINDOWS ONLY] How the window should be displayed by default. Valid
+      inputs: normal, maximized, minimized. Defaults to normal'
+    required: false
+    default: 'normal'
+  hot-key:
+    description:
+      '[WINDOWS ONLY] A global hotkey to associate to opening this shortcut,
+      like CTRL+ALT+F'
+    required: false
+    default: ''
+  working-directory:
+    description:
+      '[WINDOWS ONLY] The working directory for the shortcut when it launches,
+      must be a valid path to a folder'
+    required: false
+    default: ''
+  type:
+    description:
+      '[LINUX ONLY] Type of shortcut. Valid inputs: Link, Directory, Application'
+    required: false
+    default: ''
+  terminal:
+    description: '[LINUX ONLY] If the shortcut should run in a terminal'
+    required: false
+    default: false
+  chmod:
+    description:
+      '[LINUX ONLY] If true, will apply a `chmod +x` (755) to the shortcut after
+      creation to allow execution permission'
     required: false
     default: false
 
