@@ -117,8 +117,14 @@ jobs:
 
           # Check if the output path is a shortcut
           if (Test-Path $outputPath -PathType Leaf) {
-            Write-Host "The output path $outputPath is a file."
-            # TODO: Actually validate if the symlink points to the same file
+            # Validate if the symlink points to the same file
+            $targetPath = (Get-Item $outputPath).Target
+            if ($targetPath -eq $sourcePath) {
+              Write-Host "The symlink points to the correct file."
+            } else {
+              Write-Host "The symlink does not point to the correct file."
+              exit 1
+            }
           } else {
             Write-Host "The output path $outputPath does not exist or is not a file."
             exit 1
