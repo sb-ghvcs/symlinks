@@ -119,7 +119,7 @@ jobs:
           if (Test-Path $outputPath -PathType Leaf) {
             $shell = New-Object -ComObject WScript.Shell
             $shortcut = $shell.CreateShortcut($outputPath)
-            $shortcutTarget = $shortcut.TargetPath
+            $shortcutTarget = (Resolve-Path $shortcut.TargetPath).Path
             Write-Host "Comparing Shortcut Target: $shortcutTarget to Source: $sourcePath"
             if ($shortcutTarget -eq $sourcePath) {
               Write-Host "The output path $outputPath is a shortcut to the source path $sourcePath."
