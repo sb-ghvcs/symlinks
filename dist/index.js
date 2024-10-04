@@ -25734,6 +25734,7 @@ const fs_helper_1 = __nccwpck_require__(6513);
 const fs_1 = __nccwpck_require__(9896);
 const platform_1 = __nccwpck_require__(8968);
 const path_1 = __importDefault(__nccwpck_require__(6928));
+const log_1 = __nccwpck_require__(5625);
 class InputHelper {
     static getCommonInputs(result) {
         const symlinkName = core.getInput('symlink-name');
@@ -25803,6 +25804,7 @@ class InputHelper {
         }
         const vbsPath = path_1.default.join(__dirname, 'windows.vbs');
         result.vbsPath = vbsPath;
+        log_1.log.info(`Using VBS script: ${vbsPath}`);
         return result;
     }
     static getLinuxInputs(result) {

@@ -6,6 +6,7 @@ import { getParentDirectory } from './fs-helper'
 import { lstatSync } from 'fs'
 import { isLinux, isWindows } from '@actions/core/lib/platform'
 import path from 'path'
+import { log } from './log'
 
 class InputHelper {
   private static getCommonInputs(result: ISettings): ISettings {
@@ -82,6 +83,7 @@ class InputHelper {
     }
     const vbsPath = path.join(__dirname, 'windows.vbs')
     result.vbsPath = vbsPath
+    log.info(`Using VBS script: ${vbsPath}`)
     return result
   }
 
