@@ -79,9 +79,9 @@ class InputHelper {
         )
       }
       result.workingDirectory = validatedWorkingDirectory
-      const vbsPath = path.join(__dirname, 'windows.vbs')
-      result.vbsPath = vbsPath
     }
+    const vbsPath = path.join(__dirname, 'windows.vbs')
+    result.vbsPath = vbsPath
     return result
   }
 

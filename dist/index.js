@@ -25800,9 +25800,9 @@ class InputHelper {
                 throw new Error(`Invalid working-directory: ${validatedWorkingDirectory} must be a valid directory.`);
             }
             result.workingDirectory = validatedWorkingDirectory;
-            const vbsPath = path_1.default.join(__dirname, 'windows.vbs');
-            result.vbsPath = vbsPath;
         }
+        const vbsPath = path_1.default.join(__dirname, 'windows.vbs');
+        result.vbsPath = vbsPath;
         return result;
     }
     static getLinuxInputs(result) {
