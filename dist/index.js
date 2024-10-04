@@ -26250,7 +26250,7 @@ function createLinuxSymlink(settings) {
     const { fileContents, filePath } = (0, linux_helper_1.generateLinuxFiledata)(settings);
     let created = true;
     try {
-        (0, fs_1.writeFileSync)(settings.destinationDirectory, fileContents);
+        (0, fs_1.writeFileSync)(filePath, fileContents);
         log_1.log.info(`Created linux symling: ${filePath}`);
     }
     catch (error) {

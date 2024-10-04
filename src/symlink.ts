@@ -29,7 +29,7 @@ function createLinuxSymlink(settings: ISettings): SymlinkResult {
   const { fileContents, filePath } = generateLinuxFiledata(settings)
   let created = true
   try {
-    writeFileSync(settings.destinationDirectory, fileContents)
+    writeFileSync(filePath, fileContents)
     log.info(`Created linux symling: ${filePath}`)
   } catch (error) {
     created = false
