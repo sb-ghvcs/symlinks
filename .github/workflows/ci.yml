@@ -109,14 +109,21 @@ jobs:
       - name: Test Symlink
         id: test-symlink
         run: |
-          $sourcePath=${{ steps.run-symlink.outputs.source-path }}
-          $outputPath=${{ steps.run-symlink.outputs.output-path }}
+          $sourcePath="${{ steps.run-symlink.outputs.source-path }}"
+          $outputPath="${{ steps.run-symlink.outputs.output-path }}"
           Write-Host "sourcePath: $sourcePath"
           Write-Host "outputPath: $outputPath"
-          $shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut($outputPath)
-          if ($shortcut.TargetPath -eq $sourcePath) {
-            Write-Host "Shortcut points to the correct target."
+          # Check if the output path is a shortcut
+          if (Test-Path $outputPath -PathType Leaf) {
+            $shortcut = New-Object -ComObject WScript.Shell
+            $shortcutTarget = $shortcut.CreateShortcut($outputPath).TargetPath
+            if ($shortcutTarget -eq (Resolve-Path $sourcePath).Path) {
+              Write-Host "The output path $outputPath is a shortcut to the source path $sourcePath."
+            } else {
+              Write-Host "The output path $outputPath is not a shortcut to the source path $sourcePath"
+              exit 1
+            }
           } else {
-            Write-Host "Shortcut does not point to the correct target."
+            Write-Host "The output path $outputPath does not exist or is not a file."
             exit 1
           }
