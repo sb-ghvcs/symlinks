@@ -1,7 +1,7 @@
 {
   "name": "symlinks",
   "description": "GitHub Action to create symlinks or shortcuts for self-hosted runners",
-  "version": "0.0.1",
+  "version": "v0.0.1",
   "author": "work@shivanshbakshi.dev",
   "private": true,
   "homepage": "https://github.com/sb-ghvcs/symlinks",
