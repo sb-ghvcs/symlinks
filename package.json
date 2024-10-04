@@ -1,16 +1,16 @@
 {
-  "name": "typescript-action",
-  "description": "GitHub Actions TypeScript template",
-  "version": "0.0.0",
-  "author": "",
+  "name": "symlinks",
+  "description": "GitHub Action to create symlinks or shortcuts for self-hosted runners",
+  "version": "0.0.1",
+  "author": "work@shivanshbakshi.dev",
   "private": true,
-  "homepage": "https://github.com/actions/typescript-action",
+  "homepage": "https://github.com/sb-ghvcs/symlinks",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/actions/typescript-action.git"
+    "url": "git+https://github.com/sb-ghvcs/symlinks.git"
   },
   "bugs": {
-    "url": "https://github.com/actions/typescript-action/issues"
+    "url": "https://github.com/sb-ghvcs/symlinks/issues"
   },
   "keywords": [
     "actions",
