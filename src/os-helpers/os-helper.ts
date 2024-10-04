@@ -23,8 +23,8 @@ export function resolveEnvironmentVariables(
   function replaceEnvironmentVariable(
     withPercents: string,
     withoutPercents: string
-  ) {
-    let found = process.env[withoutPercents]
+  ): string {
+    const found = process.env[withoutPercents]
     // 'C:\Users\%USERNAME%\Desktop\%asdf%' => 'C:\Users\bob\Desktop\%asdf%'
     return found || withPercents
   }

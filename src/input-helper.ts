@@ -6,7 +6,7 @@ import { getParentDirectory } from './fs-helper'
 import { lstatSync } from 'fs'
 import { isLinux, isWindows } from '@actions/core/lib/platform'
 
-export class InputHelper {
+class InputHelper {
   private static getCommonInputs(result: ISettings): ISettings {
     result.symlinkName = core.getInput('symlink-name')
     const comment = core.getInput('comment')
@@ -106,7 +106,7 @@ export class InputHelper {
     return result
   }
 
-  public static getInputs(): ISettings {
+  getInputs(): ISettings {
     let result = {} as ISettings
 
     result = InputHelper.getCommonInputs(result)
@@ -119,3 +119,5 @@ export class InputHelper {
     return result
   }
 }
+
+export const inputHelper = new InputHelper()

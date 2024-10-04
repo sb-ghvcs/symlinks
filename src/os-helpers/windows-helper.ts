@@ -1,11 +1,8 @@
 import { existsSync } from 'fs'
 import path from 'path'
-import { resolvePATH } from 'src/fs-helper'
-import { log } from 'src/log'
-import {
-  IOsHelper,
-  resolveEnvironmentVariables
-} from 'src/os-helpers/os-helper'
+import { resolvePATH } from '../fs-helper'
+import { log } from '../log'
+import { IOsHelper, resolveEnvironmentVariables } from './os-helper'
 
 export class WindowsHelper implements IOsHelper {
   getResolvedPath(filePath: string): string {
@@ -39,7 +36,7 @@ export class WindowsHelper implements IOsHelper {
       parsedSourceDirectory = path.parse(parsedSourceDirectory).dir
       resolvedPath = path.join(parsedSourceDirectory, resolvedPath)
     }
-    let iconPattern = /^.*(?:\.exe|\.ico|\.dll)(?:,\d*)?$/m
+    const iconPattern = /^.*(?:\.exe|\.ico|\.dll)(?:,\d*)?$/m
     if (!RegExp(iconPattern).test(iconPath)) {
       log.error(
         'Windows ICON must be ICO, EXE, or DLL File. It may be followed by a comma and icon index value, like: "C:\\file.exe,0"'
@@ -47,7 +44,7 @@ export class WindowsHelper implements IOsHelper {
       return undefined
     }
 
-    function removeIconIndex(icon: string) {
+    function removeIconIndex(icon: string): string {
       // 'C:\\file.dll,0' => 'dll,0'
       const extension = path.parse(icon).ext
       // 'dll,0' => ['dll', '0'] => 'dll'

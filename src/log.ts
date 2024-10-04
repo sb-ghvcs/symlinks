@@ -1,5 +1,6 @@
 import * as core from '@actions/core'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type LoggerType = (message?: any, ...optionalParams: any[]) => void
 
 class Logger {
@@ -7,7 +8,7 @@ class Logger {
   private debugLogger
   private errorLogger
 
-  public constructor(
+  constructor(
     infoLogger: LoggerType = console.log,
     debugLogger: LoggerType = console.debug,
     errorLogger: LoggerType = console.error
@@ -17,15 +18,15 @@ class Logger {
     this.errorLogger = errorLogger
   }
 
-  public info(message: string) {
+  info(message: string): void {
     this.infoLogger(message)
   }
 
-  public debug(message: string) {
+  debug(message: string): void {
     this.debugLogger(message)
   }
 
-  public error(message: string) {
+  error(message: string): void {
     this.errorLogger(message)
   }
 }

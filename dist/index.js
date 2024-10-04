@@ -25840,7 +25840,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.InputHelper = void 0;
+exports.inputHelper = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const windows_helper_1 = __nccwpck_require__(1824);
 const linux_helper_1 = __nccwpck_require__(2205);
@@ -25933,7 +25933,7 @@ class InputHelper {
         result.chmod = core.getBooleanInput('chmod');
         return result;
     }
-    static getInputs() {
+    getInputs() {
         let result = {};
         result = InputHelper.getCommonInputs(result);
         if (platform_1.isWindows) {
@@ -25945,7 +25945,7 @@ class InputHelper {
         return result;
     }
 }
-exports.InputHelper = InputHelper;
+exports.inputHelper = new InputHelper();
 
 
 /***/ }),
@@ -26044,7 +26044,7 @@ const input_helper_1 = __nccwpck_require__(5432);
  */
 async function run() {
     try {
-        const inputSettings = input_helper_1.InputHelper.getInputs();
+        const inputSettings = input_helper_1.inputHelper.getInputs();
         const { source, destination } = await (0, symlink_1.symlink)(inputSettings);
         // Set outputs for other workflow steps to use
         core.setOutput('source-path', source);
@@ -26193,7 +26193,7 @@ function resolveEnvironmentVariables(filePath) {
         return undefined;
     }
     function replaceEnvironmentVariable(withPercents, withoutPercents) {
-        let found = process.env[withoutPercents];
+        const found = process.env[withoutPercents];
         // 'C:\Users\%USERNAME%\Desktop\%asdf%' => 'C:\Users\bob\Desktop\%asdf%'
         return found || withPercents;
     }
@@ -26247,7 +26247,7 @@ class WindowsHelper {
             parsedSourceDirectory = path_1.default.parse(parsedSourceDirectory).dir;
             resolvedPath = path_1.default.join(parsedSourceDirectory, resolvedPath);
         }
-        let iconPattern = /^.*(?:\.exe|\.ico|\.dll)(?:,\d*)?$/m;
+        const iconPattern = /^.*(?:\.exe|\.ico|\.dll)(?:,\d*)?$/m;
         if (!RegExp(iconPattern).test(iconPath)) {
             log_1.log.error('Windows ICON must be ICO, EXE, or DLL File. It may be followed by a comma and icon index value, like: "C:\\file.exe,0"');
             return undefined;

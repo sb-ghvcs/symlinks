@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import { symlink } from './symlink'
-import { InputHelper } from './input-helper'
+import { inputHelper } from './input-helper'
 
 /**
  * The main function for the action.
@@ -8,7 +8,7 @@ import { InputHelper } from './input-helper'
  */
 export async function run(): Promise<void> {
   try {
-    const inputSettings = InputHelper.getInputs()
+    const inputSettings = inputHelper.getInputs()
     const { source, destination } = await symlink(inputSettings)
     // Set outputs for other workflow steps to use
     core.setOutput('source-path', source)

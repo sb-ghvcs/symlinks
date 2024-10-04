@@ -1,9 +1,9 @@
 import { existsSync, lstatSync } from 'fs'
 import path from 'path'
-import { resolvePATH } from 'src/fs-helper'
-import { log } from 'src/log'
-import { IOsHelper, resolveTilde } from 'src/os-helpers/os-helper'
-import { LinuxType } from 'src/settings'
+import { resolvePATH } from '../fs-helper'
+import { log } from '../log'
+import { IOsHelper, resolveTilde } from './os-helper'
+import { LinuxType } from '../settings'
 
 export class LinuxHelper implements IOsHelper {
   getResolvedPath(filePath: string, type?: LinuxType): string {
