@@ -29,7 +29,6 @@ set -e
 # Variables
 semver_tag_regex='v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9]+)?$'
 semver_tag_glob='v[0-9].[0-9].[0-9]*'
-git_remote='origin'
 
 # Terminal colors
 OFF='\033[0m'

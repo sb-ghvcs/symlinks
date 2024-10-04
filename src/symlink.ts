@@ -3,7 +3,7 @@ import { ISettings } from './settings'
 import * as fs from 'fs'
 import { log } from './log'
 import path from 'path'
-import { spawn } from 'child_process'
+import { spawnSync } from 'child_process'
 
 interface SymlinkResult {
   source: string
@@ -109,7 +109,16 @@ function createWindowsSymlink(settings: ISettings): SymlinkResult {
   ]
 
   try {
-    spawn('wscript', wscriptArguments)
+    const result = spawnSync('wscript', wscriptArguments)
+    if (result.error) {
+      throw new Error(`Failed to create symlink: ${result.error.message}`)
+    }
+    if (result.stderr) {
+      log.error(result.stderr.toString())
+    }
+    if (result.stdout) {
+      log.info(result.stdout.toString())
+    }
     log.info(`Created symlink successfully`)
   } catch (err) {
     throw new Error(`Failed to create symlink: ${err}`)
