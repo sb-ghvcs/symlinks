@@ -1,88 +1,125 @@
-import * as core from '@actions/core'
+import { isLinux, isWindows } from '@actions/core/lib/platform'
+import { ISettings } from './settings'
 import * as fs from 'fs'
-import * as path from 'path'
-import { isLinux, isWindows } from './os-helper'
-import { directoryExistsSync, existsSync } from './fs-helper'
+import { log } from './log'
+import path from 'path'
+import { spawnSync } from 'child_process'
 
-/**
- * Create a symlink from one path to another.
- * @param sourcePath The path to create a symlink for
- * @param destinationPath The path to the desired symlink
- * @returns {Promise<string>} Resolves with absolute path to the created symlink.
- */
-export async function symlink(
-  sourcePath: string,
-  destinationPath: string,
-  override = false
-): Promise<{
+interface SymlinkResult {
   source: string
   destination: string
-}> {
+}
+
+export async function symlink(settings: ISettings): Promise<SymlinkResult> {
   return new Promise((resolve, reject) => {
-    if (!sourcePath || !destinationPath) {
-      reject('Source and destination paths must not be empty')
-    }
-
-    const absoluteSourcePath = path.resolve(sourcePath)
-    const absoluteDestPath = path.resolve(destinationPath)
-
-    const parentDir = path.dirname(absoluteDestPath)
-    if (!directoryExistsSync(parentDir, true)) {
-      fs.mkdirSync(parentDir, { recursive: true })
-    }
-
-    if (existsSync(absoluteDestPath)) {
-      core.debug(`Destination path '${absoluteDestPath}' already exists`)
-      const stats = fs.lstatSync(absoluteDestPath)
-      if (
-        stats.isSymbolicLink() ||
-        (isWindows() && path.extname(absoluteDestPath) === '.lnk')
-      ) {
-        const existingTarget = fs.readlinkSync(absoluteDestPath)
-        if (existingTarget === absoluteSourcePath) {
-          resolve({ source: absoluteSourcePath, destination: absoluteDestPath })
-        } else if (override) {
-          fs.unlinkSync(absoluteDestPath)
-        } else {
-          reject(
-            `Destination path '${absoluteDestPath}' already exists and does not point to the source path`
-          )
-        }
-      } else if (!override) {
-        reject(`Destination path '${absoluteDestPath}' already exists`)
+    try {
+      if (isLinux) {
+        resolve(createLinuxSymlink(settings))
+      } else if (isWindows) {
+        resolve(createWindowsSymlink(settings))
+      } else {
+        reject('Unsupported platform. Only Windows and Linux are supported')
       }
+    } catch (error: unknown) {
+      reject(error)
     }
-
-    if (isLinux()) {
-      core.debug(
-        `Creating linux symlink for ${absoluteSourcePath} to ${absoluteDestPath}`
-      )
-      fs.symlinkSync(absoluteSourcePath, absoluteDestPath)
-    } else if (isWindows()) {
-      core.debug(
-        `Creating windows shortcut for ${absoluteSourcePath} to ${absoluteDestPath}`
-      )
-      const command = `mklink "${absoluteDestPath}" "${absoluteSourcePath}"`
-      core.debug(`Running command: ${command}`)
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-      const exec = require('child_process').exec
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      exec(command, (err: any, stdout: any, stderr: any) => {
-        if (err) {
-          core.error(`Error creating symlink: ${err.message}`)
-          reject(err)
-        } else if (stderr) {
-          core.error(`Error creating symlink: ${stderr}`)
-          reject(new Error(stderr))
-        } else {
-          core.debug(`stdout: ${stdout}`)
-          resolve({ source: absoluteSourcePath, destination: absoluteDestPath })
-        }
-      })
-    } else {
-      reject('Unsupported OS')
-    }
-
-    resolve({ source: absoluteSourcePath, destination: absoluteDestPath })
   })
+}
+
+function createLinuxSymlink(settings: ISettings): SymlinkResult {
+  const sourcePathName = path.basename(settings.sourcePath)
+  const symlinkPath = settings.symlinkName
+    ? path.join(settings.destinationDirectory, settings.symlinkName)
+    : path.join(settings.destinationDirectory, sourcePathName)
+
+  log.info(`Creating symlink ${symlinkPath} -> ${settings.sourcePath}`)
+
+  fs.symlink(settings.sourcePath, symlinkPath, settings.type, err => {
+    if (err) {
+      throw new Error(`Failed to create symlink: ${err.message}`)
+    } else {
+      log.info(`Created symlink successfully`)
+    }
+  })
+
+  if (settings.chmod) {
+    fs.chmod(symlinkPath, 0o755, err => {
+      if (err) {
+        throw new Error(`Failed to change permissions: ${err.message}`)
+      }
+    })
+  }
+
+  return {
+    source: settings.sourcePath,
+    destination: symlinkPath
+  }
+}
+
+function createWindowsSymlink(settings: ISettings): SymlinkResult {
+  const vbsScript = settings.vbsPath
+  if (!vbsScript) {
+    throw new Error('Missing VBS Script for creating windows shortcut')
+  }
+
+  const windowModes = {
+    normal: '1',
+    maximized: '3',
+    minimized: '7'
+  }
+
+  const sourcePathName = path.basename(settings.sourcePath)
+  const outputPath = settings.symlinkName
+    ? path.join(settings.destinationDirectory, settings.symlinkName + '.lnk')
+    : path.join(settings.destinationDirectory, sourcePathName + '.lnk')
+  log.info(`Creating symlink ${outputPath} -> ${settings.sourcePath}`)
+  const sourcePath = settings.sourcePath
+  let args = settings.arguments || ''
+  let comment = settings.comment || ''
+  const cwd = settings.workingDirectory || ''
+  let icon = settings.iconPath
+  const windowMode = windowModes[settings.windowMode || 'normal']
+  let hotKey = settings.hotKey || ''
+
+  function replaceDoubleQuotes(input: string): string {
+    return input.split('"').join('__DOUBLEQUOTE__')
+  }
+  args = replaceDoubleQuotes(args)
+  comment = replaceDoubleQuotes(comment)
+  hotKey = replaceDoubleQuotes(hotKey)
+
+  if (!icon) {
+    if (sourcePath.endsWith('.dll') || sourcePath.endsWith('.exe')) {
+      icon = sourcePath + ',0'
+    } else {
+      icon = sourcePath
+    }
+  }
+
+  const wscriptArguments = [
+    vbsScript,
+    outputPath,
+    sourcePath,
+    args,
+    comment,
+    cwd,
+    icon,
+    windowMode,
+    hotKey
+  ]
+
+  try {
+    const result = spawnSync('wscript', wscriptArguments)
+    if (result.error) {
+      throw new Error(result.error.message)
+    }
+    log.info(`Created symlink successfully`)
+  } catch (error) {
+    log.error(`Failed to create symlink: ${error}`)
+    throw new Error(`Failed to create symlink`)
+  }
+  return {
+    source: settings.sourcePath,
+    destination: outputPath
+  }
 }

@@ -63,7 +63,7 @@ jobs:
         uses: ./
         with:
           source-path: ./test.txt
-          destination-path: ./test-symlink.txt
+          destination-directory: ../
 
       - name: Test Symlink
         id: test-symlink
@@ -72,6 +72,8 @@ jobs:
           outputPath=${{ steps.run-symlink.outputs.output-path }}
           echo "sourcePath: $sourcePath"
           echo "outputPath: $outputPath"
+
+          ls -lA
           if [ -L "$outputPath" ]; then
             target=$(readlink -f "$outputPath")
             if [ "$target" = "$sourcePath" ]; then
@@ -104,7 +106,7 @@ jobs:
         uses: ./
         with:
           source-path: ./test.txt
-          destination-path: ./test-symlink.lnk
+          destination-directory: ../
 
       - name: Test Symlink
         id: test-symlink
@@ -117,8 +119,14 @@ jobs:
 
           # Check if the output path is a shortcut
           if (Test-Path $outputPath -PathType Leaf) {
-            Write-Host "The output path $outputPath is a file."
-            # TODO: Actually validate if the symlink points to the same file
+            $shell = New-Object -ComObject WScript.Shell
+            $shortcut = $shell.CreateShortcut($outputPath)
+            if ($shortcut.TargetPath -eq $sourcePath) {
+              Write-Host "The output path is a shortcut that points to the source path."
+            } else {
+              Write-Host "The output path is not a shortcut to the source path."
+              exit 1
+            }
           } else {
             Write-Host "The output path $outputPath does not exist or is not a file."
             exit 1
