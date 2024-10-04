@@ -36,9 +36,10 @@ function createLinuxSymlink(settings: ISettings): SymlinkResult {
   fs.symlink(settings.sourcePath, symlinkPath, settings.type, err => {
     if (err) {
       throw new Error(`Failed to create symlink: ${err.message}`)
+    } else {
+      log.info(`Created symlink successfully`)
     }
   })
-  log.info(`Created symlink successfully`)
 
   if (settings.chmod) {
     fs.chmod(symlinkPath, 0o755, err => {

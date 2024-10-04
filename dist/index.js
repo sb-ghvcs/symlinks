@@ -26233,8 +26233,10 @@ function createLinuxSymlink(settings) {
         if (err) {
             throw new Error(`Failed to create symlink: ${err.message}`);
         }
+        else {
+            log_1.log.info(`Created symlink successfully`);
+        }
     });
-    log_1.log.info(`Created symlink successfully`);
     if (settings.chmod) {
         fs.chmod(symlinkPath, 0o755, err => {
             if (err) {

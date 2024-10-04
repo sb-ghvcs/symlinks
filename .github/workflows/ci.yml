@@ -63,7 +63,7 @@ jobs:
         uses: ./
         with:
           source-path: ./test.txt
-          destination-directory: ./
+          destination-directory: ../
 
       - name: Test Symlink
         id: test-symlink
