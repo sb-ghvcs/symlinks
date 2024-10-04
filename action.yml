@@ -15,6 +15,10 @@ inputs:
   destination-path:
     description: 'The destination path to create the symlink or shortcut to'
     required: true
+  override:
+    description: 'Override whatever is at destination path if it exists'
+    required: false
+    default: false
 
 # Define your outputs here.
 outputs:

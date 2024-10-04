@@ -9,18 +9,20 @@ export async function run(): Promise<void> {
   try {
     const sourcePath: string = core.getInput('source-path')
     const destinationPath: string = core.getInput('destination-path')
+    const override: boolean = core.getBooleanInput('override')
 
     // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
     core.debug(`Creating symlink for ${sourcePath} to ${destinationPath}...`)
 
-    const [sourceSymlinkPath, createdSymlinkPath] = await symlink(
+    const { source, destination } = await symlink(
       sourcePath,
-      destinationPath
+      destinationPath,
+      override
     )
 
     // Set outputs for other workflow steps to use
-    core.setOutput('source-path', sourceSymlinkPath)
-    core.setOutput('output-path', createdSymlinkPath)
+    core.setOutput('source-path', source)
+    core.setOutput('output-path', destination)
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)

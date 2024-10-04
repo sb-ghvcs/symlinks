@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import * as fs from 'fs'
 
 export function directoryExistsSync(path: string, required?: boolean): boolean {

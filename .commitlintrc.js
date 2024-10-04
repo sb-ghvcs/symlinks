@@ -1,5 +1,4 @@
-
-          // build: Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)
+// build: Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)
 // ci: Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)
 // docs: Documentation only changes
 // feat: A new feature
@@ -22,7 +21,7 @@ module.exports = {
     'subject-case': [
       2,
       'never',
-      ['sentence-case', 'start-case', 'pascal-case', 'upper-case'],
+      ['sentence-case', 'start-case', 'pascal-case', 'upper-case']
     ],
     'subject-empty': [2, 'never'],
     'subject-full-stop': [2, 'never', '.'],
@@ -45,9 +44,8 @@ module.exports = {
         'test',
         'translation',
         'security',
-        'changeset',
-      ],
-    ],
-  },
-};
-        
+        'changeset'
+      ]
+    ]
+  }
+}

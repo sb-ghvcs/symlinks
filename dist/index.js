@@ -25634,6 +25634,103 @@ module.exports = {
 
 /***/ }),
 
+/***/ 6513:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.directoryExistsSync = directoryExistsSync;
+exports.existsSync = existsSync;
+exports.fileExistsSync = fileExistsSync;
+const fs = __importStar(__nccwpck_require__(9896));
+function directoryExistsSync(path, required) {
+    if (!path) {
+        throw new Error("Arg 'path' must not be empty");
+    }
+    let stats;
+    try {
+        stats = fs.statSync(path);
+    }
+    catch (error) {
+        if (error?.code === 'ENOENT') {
+            if (!required) {
+                return false;
+            }
+            throw new Error(`Directory '${path}' does not exist`);
+        }
+        throw new Error(`Encountered an error when checking whether path '${path}' exists: ${error?.message ?? error}`);
+    }
+    if (stats.isDirectory()) {
+        return true;
+    }
+    else if (!required) {
+        return false;
+    }
+    throw new Error(`Directory '${path}' does not exist`);
+}
+function existsSync(path) {
+    if (!path) {
+        throw new Error("Arg 'path' must not be empty");
+    }
+    try {
+        fs.statSync(path);
+    }
+    catch (error) {
+        if (error?.code === 'ENOENT') {
+            return false;
+        }
+        throw new Error(`Encountered an error when checking whether path '${path}' exists: ${error?.message ?? error}`);
+    }
+    return true;
+}
+function fileExistsSync(path) {
+    if (!path) {
+        throw new Error("Arg 'path' must not be empty");
+    }
+    let stats;
+    try {
+        stats = fs.statSync(path);
+    }
+    catch (error) {
+        if (error?.code === 'ENOENT') {
+            return false;
+        }
+        throw new Error(`Encountered an error when checking whether path '${path}' exists: ${error?.message ?? error}`);
+    }
+    if (!stats.isDirectory()) {
+        return true;
+    }
+    return false;
+}
+
+
+/***/ }),
+
 /***/ 1730:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -25674,12 +25771,13 @@ async function run() {
     try {
         const sourcePath = core.getInput('source-path');
         const destinationPath = core.getInput('destination-path');
+        const override = core.getBooleanInput('override');
         // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
         core.debug(`Creating symlink for ${sourcePath} to ${destinationPath}...`);
-        const [sourceSymlinkPath, createdSymlinkPath] = await (0, symlink_1.symlink)(sourcePath, destinationPath);
+        const { source, destination } = await (0, symlink_1.symlink)(sourcePath, destinationPath, override);
         // Set outputs for other workflow steps to use
-        core.setOutput('source-path', sourceSymlinkPath);
-        core.setOutput('output-path', createdSymlinkPath);
+        core.setOutput('source-path', source);
+        core.setOutput('output-path', destination);
     }
     catch (error) {
         // Fail the workflow run if an error occurs
@@ -25691,24 +25789,144 @@ async function run() {
 
 /***/ }),
 
-/***/ 3428:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ 3566:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isLinux = isLinux;
+exports.isWindows = isWindows;
+const os = __importStar(__nccwpck_require__(857));
+function isLinux() {
+    return os.platform() === 'linux';
+}
+function isWindows() {
+    return os.platform() === 'win32';
+}
+
+
+/***/ }),
+
+/***/ 3428:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.symlink = symlink;
+const fs = __importStar(__nccwpck_require__(9896));
+const path = __importStar(__nccwpck_require__(6928));
+const os_helper_1 = __nccwpck_require__(3566);
+const fs_helper_1 = __nccwpck_require__(6513);
 /**
  * Create a symlink from one path to another.
  * @param sourcePath The path to create a symlink for
  * @param destinationPath The path to the desired symlink
  * @returns {Promise<string>} Resolves with absolute path to the created symlink.
  */
-async function symlink(sourcePath, destinationPath) {
+async function symlink(sourcePath, destinationPath, override = false) {
     return new Promise(resolve => {
-        setTimeout(() => resolve(['done!', 'done!']), 2000);
+        if (!sourcePath || !destinationPath) {
+            throw new Error('Source and destination paths must not be empty');
+        }
+        const absoluteSourcePath = path.resolve(sourcePath);
+        const absoluteDestPath = path.resolve(destinationPath);
+        const parentDir = path.dirname(absoluteDestPath);
+        if (!(0, fs_helper_1.directoryExistsSync)(parentDir, true)) {
+            fs.mkdirSync(parentDir, { recursive: true });
+        }
+        if ((0, fs_helper_1.existsSync)(absoluteDestPath)) {
+            const stats = fs.lstatSync(absoluteDestPath);
+            if (stats.isSymbolicLink() ||
+                ((0, os_helper_1.isWindows)() && path.extname(absoluteDestPath) === '.lnk')) {
+                const existingTarget = fs.readlinkSync(absoluteDestPath);
+                if (existingTarget === absoluteSourcePath) {
+                    resolve({ source: absoluteSourcePath, destination: absoluteDestPath });
+                }
+                else if (override) {
+                    fs.unlinkSync(absoluteDestPath);
+                }
+                else {
+                    throw new Error(`Destination path '${absoluteDestPath}' already exists and does not point to the source path`);
+                }
+            }
+            else if (!override) {
+                throw new Error(`Destination path '${absoluteDestPath}' already exists`);
+            }
+        }
+        if ((0, os_helper_1.isLinux)()) {
+            fs.symlinkSync(absoluteSourcePath, absoluteDestPath);
+        }
+        else if ((0, os_helper_1.isWindows)()) {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+            const shortcut = __nccwpck_require__(8262);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            shortcut.create(absoluteDestPath, { target: absoluteSourcePath }, (err) => {
+                if (err)
+                    throw err;
+            });
+        }
+        else {
+            throw new Error('Unsupported OS');
+        }
+        resolve({ source: absoluteSourcePath, destination: absoluteDestPath });
     });
 }
+
+
+/***/ }),
+
+/***/ 8262:
+/***/ ((module) => {
+
+module.exports = eval("require")("windows-shortcuts");
 
 
 /***/ }),
