@@ -75,20 +75,37 @@ export async function symlink(
         `Creating windows shortcut for ${absoluteSourcePath} to ${absoluteDestPath}`
       )
       // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-      const shortcut = require('windows-shortcuts')
-      shortcut.create(
-        absoluteDestPath,
-        { target: absoluteSourcePath },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (err: any) => {
-          if (err) {
-            core.error(err)
-            reject(err)
-          } else {
-            core.debug(`Created windows shortcut for ${absoluteSourcePath}`)
-          }
+      // const shortcut = require('windows-shortcuts')
+      // shortcut.create(
+      //   absoluteDestPath,
+      //   { target: absoluteSourcePath },
+      //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      //   (err: any) => {
+      //     if (err) {
+      //       core.error(err)
+      //       reject(err)
+      //     } else {
+      //       core.debug(`Created windows shortcut for ${absoluteSourcePath}`)
+      //     }
+      //   }
+      // )
+      const command = `mklink "${absoluteDestPath}" "${absoluteSourcePath}"`
+      core.debug(`Running command: ${command}`)
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+      const exec = require('child_process').exec
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      exec(command, (err: any, stdout: any, stderr: any) => {
+        if (err) {
+          core.error(`Error creating symlink: ${err.message}`)
+          reject(err)
+        } else if (stderr) {
+          core.error(`Error creating symlink: ${stderr}`)
+          reject(new Error(stderr))
+        } else {
+          core.debug(`stdout: ${stdout}`)
+          resolve({ source: absoluteSourcePath, destination: absoluteDestPath })
         }
-      )
+      })
     } else {
       reject('Unsupported OS')
     }
