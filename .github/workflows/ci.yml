@@ -109,8 +109,8 @@ jobs:
       - name: Test Symlink
         id: test-symlink
         run: |
-          sourcePath=${{ steps.run-symlink.outputs.source-path }}
-          outputPath=${{ steps.run-symlink.outputs.output-path }}
+          $sourcePath=${{ steps.run-symlink.outputs.source-path }}
+          $outputPath=${{ steps.run-symlink.outputs.output-path }}
           Write-Host "sourcePath: $sourcePath"
           Write-Host "outputPath: $outputPath"
           $shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut($outputPath)
