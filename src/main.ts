@@ -11,9 +11,6 @@ export async function run(): Promise<void> {
     const destinationPath: string = core.getInput('destination-path')
     const override: boolean = core.getBooleanInput('override')
 
-    // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Creating symlink for ${sourcePath} to ${destinationPath}...`)
-
     const { source, destination } = await symlink(
       sourcePath,
       destinationPath,

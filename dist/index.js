@@ -25917,8 +25917,6 @@ async function run() {
         const sourcePath = core.getInput('source-path');
         const destinationPath = core.getInput('destination-path');
         const override = core.getBooleanInput('override');
-        // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-        core.debug(`Creating symlink for ${sourcePath} to ${destinationPath}...`);
         const { source, destination } = await (0, symlink_1.symlink)(sourcePath, destinationPath, override);
         // Set outputs for other workflow steps to use
         core.setOutput('source-path', source);
@@ -26006,6 +26004,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.symlink = symlink;
+const core = __importStar(__nccwpck_require__(7484));
 const fs = __importStar(__nccwpck_require__(9896));
 const path = __importStar(__nccwpck_require__(6928));
 const os_helper_1 = __nccwpck_require__(3566);
@@ -26017,9 +26016,9 @@ const fs_helper_1 = __nccwpck_require__(6513);
  * @returns {Promise<string>} Resolves with absolute path to the created symlink.
  */
 async function symlink(sourcePath, destinationPath, override = false) {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
         if (!sourcePath || !destinationPath) {
-            throw new Error('Source and destination paths must not be empty');
+            reject('Source and destination paths must not be empty');
         }
         const absoluteSourcePath = path.resolve(sourcePath);
         const absoluteDestPath = path.resolve(destinationPath);
@@ -26028,28 +26027,36 @@ async function symlink(sourcePath, destinationPath, override = false) {
             fs.mkdirSync(parentDir, { recursive: true });
         }
         if ((0, fs_helper_1.existsSync)(absoluteDestPath)) {
+            core.debug(`Destination path '${absoluteDestPath}' already exists`);
             const stats = fs.lstatSync(absoluteDestPath);
             if (stats.isSymbolicLink() ||
                 ((0, os_helper_1.isWindows)() && path.extname(absoluteDestPath) === '.lnk')) {
                 const existingTarget = fs.readlinkSync(absoluteDestPath);
                 if (existingTarget === absoluteSourcePath) {
+                    core.debug(`Destination path '${absoluteDestPath}' already points to the source path`);
                     resolve({ source: absoluteSourcePath, destination: absoluteDestPath });
                 }
                 else if (override) {
+                    core.debug(`Overriding destination path '${absoluteDestPath}'`);
                     fs.unlinkSync(absoluteDestPath);
                 }
                 else {
-                    throw new Error(`Destination path '${absoluteDestPath}' already exists and does not point to the source path`);
+                    core.debug(`Destination path '${absoluteDestPath}' already exists and does not point to the source path`);
+                    reject(`Destination path '${absoluteDestPath}' already exists and does not point to the source path`);
                 }
             }
             else if (!override) {
-                throw new Error(`Destination path '${absoluteDestPath}' already exists`);
+                core.debug(`Destination path '${absoluteDestPath}' already exists and is not a symlink`);
+                reject(`Destination path '${absoluteDestPath}' already exists`);
             }
         }
+        core.debug(`Creating new symlink for ${absoluteSourcePath} to ${absoluteDestPath}`);
         if ((0, os_helper_1.isLinux)()) {
+            core.debug(`Creating linux symlink for ${absoluteSourcePath} to ${absoluteDestPath}`);
             fs.symlinkSync(absoluteSourcePath, absoluteDestPath);
         }
         else if ((0, os_helper_1.isWindows)()) {
+            core.debug(`Creating windows shortcut for ${absoluteSourcePath} to ${absoluteDestPath}`);
             // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
             const shortcut = __nccwpck_require__(7672);
             shortcut.create(absoluteDestPath, { target: absoluteSourcePath }, 
@@ -26060,7 +26067,7 @@ async function symlink(sourcePath, destinationPath, override = false) {
             });
         }
         else {
-            throw new Error('Unsupported OS');
+            reject('Unsupported OS');
         }
         resolve({ source: absoluteSourcePath, destination: absoluteDestPath });
     });
