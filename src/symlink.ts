@@ -111,13 +111,7 @@ function createWindowsSymlink(settings: ISettings): SymlinkResult {
   try {
     const result = spawnSync('wscript', wscriptArguments)
     if (result.error) {
-      throw new Error(`Failed to create symlink: ${result.error.message}`)
-    }
-    if (result.stderr) {
-      throw new Error(`Failed to create symlink: ${result.stderr.toString()}`)
-    }
-    if (result.stdout) {
-      log.info(result.stdout.toString())
+      throw new Error(result.error.message)
     }
     log.info(`Created symlink successfully`)
   } catch (error) {

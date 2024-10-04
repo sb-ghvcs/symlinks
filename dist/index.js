@@ -26302,13 +26302,7 @@ function createWindowsSymlink(settings) {
     try {
         const result = (0, child_process_1.spawnSync)('wscript', wscriptArguments);
         if (result.error) {
-            throw new Error(`Failed to create symlink: ${result.error.message}`);
-        }
-        if (result.stderr) {
-            throw new Error(`Failed to create symlink: ${result.stderr.toString()}`);
-        }
-        if (result.stdout) {
-            log_1.log.info(result.stdout.toString());
+            throw new Error(result.error.message);
         }
         log_1.log.info(`Created symlink successfully`);
     }
