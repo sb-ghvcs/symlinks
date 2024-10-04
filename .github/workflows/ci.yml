@@ -72,6 +72,8 @@ jobs:
           outputPath=${{ steps.run-symlink.outputs.output-path }}
           echo "sourcePath: $sourcePath"
           echo "outputPath: $outputPath"
+
+          ls -lA
           if [ -L "$outputPath" ]; then
             target=$(readlink -f "$outputPath")
             if [ "$target" = "$sourcePath" ]; then

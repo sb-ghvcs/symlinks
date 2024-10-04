@@ -25722,6 +25722,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.inputHelper = void 0;
 const core = __importStar(__nccwpck_require__(7484));
@@ -25730,6 +25733,7 @@ const linux_helper_1 = __nccwpck_require__(2205);
 const fs_helper_1 = __nccwpck_require__(6513);
 const fs_1 = __nccwpck_require__(9896);
 const platform_1 = __nccwpck_require__(8968);
+const path_1 = __importDefault(__nccwpck_require__(6928));
 class InputHelper {
     static getCommonInputs(result) {
         const symlinkName = core.getInput('symlink-name');
@@ -25796,6 +25800,8 @@ class InputHelper {
                 throw new Error(`Invalid working-directory: ${validatedWorkingDirectory} must be a valid directory.`);
             }
             result.workingDirectory = validatedWorkingDirectory;
+            const vbsPath = path_1.default.join(__dirname, 'windows.vbs');
+            result.vbsPath = vbsPath;
         }
         return result;
     }
@@ -26220,6 +26226,8 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.symlink = symlink;
 const platform_1 = __nccwpck_require__(8968);
 const linux_helper_1 = __nccwpck_require__(2205);
+const fs_1 = __nccwpck_require__(9896);
+const log_1 = __nccwpck_require__(5625);
 async function symlink(settings) {
     return new Promise((resolve, reject) => {
         try {
@@ -26239,19 +26247,24 @@ async function symlink(settings) {
     });
 }
 function createLinuxSymlink(settings) {
-    const { filePath } = (0, linux_helper_1.generateLinuxFiledata)(settings);
-    // let created = true;
-    // try {
-    //   writeFileSync(settings.destinationDirectory, fileContents);
-    // } catch (error) {
-    //   created = false;
-    //   log.error(`Could not create linux shortcut: ${error}`)
-    // }
-    // if (created && settings.chmod) {
-    //   try {
-    //     chmodSync()
-    //   }
-    // }
+    const { fileContents, filePath } = (0, linux_helper_1.generateLinuxFiledata)(settings);
+    let created = true;
+    try {
+        (0, fs_1.writeFileSync)(settings.destinationDirectory, fileContents);
+        log_1.log.info(`Created linux symling: ${filePath}`);
+    }
+    catch (error) {
+        created = false;
+        log_1.log.error(`Could not create linux symlink: ${error}`);
+    }
+    if (created && settings.chmod) {
+        try {
+            (0, fs_1.chmodSync)(filePath, '755');
+        }
+        catch (error) {
+            log_1.log.error(`Could not chmod the symlink: ${error}`);
+        }
+    }
     return {
         source: settings.sourcePath,
         destination: filePath

@@ -5,6 +5,7 @@ import { LinuxHelper } from './os-helpers/linux-helper'
 import { getParentDirectory } from './fs-helper'
 import { lstatSync } from 'fs'
 import { isLinux, isWindows } from '@actions/core/lib/platform'
+import path from 'path'
 
 class InputHelper {
   private static getCommonInputs(result: ISettings): ISettings {
@@ -78,6 +79,8 @@ class InputHelper {
         )
       }
       result.workingDirectory = validatedWorkingDirectory
+      const vbsPath = path.join(__dirname, 'windows.vbs')
+      result.vbsPath = vbsPath
     }
     return result
   }

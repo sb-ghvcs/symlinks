@@ -11,6 +11,7 @@ export interface ISettings {
   windowMode?: WindowMode
   hotKey?: string
   workingDirectory?: string
+  vbsPath?: string
   type?: LinuxType
   terminal?: boolean
   chmod?: boolean

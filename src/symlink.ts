@@ -1,8 +1,8 @@
 import { isLinux, isWindows } from '@actions/core/lib/platform'
 import { ISettings } from './settings'
 import { generateLinuxFiledata } from './os-helpers/linux-helper'
-// import { chmodSync, writeFileSync } from 'fs'
-// import { log } from './log'
+import { chmodSync, writeFileSync } from 'fs'
+import { log } from './log'
 
 interface SymlinkResult {
   source: string
@@ -26,20 +26,23 @@ export async function symlink(settings: ISettings): Promise<SymlinkResult> {
 }
 
 function createLinuxSymlink(settings: ISettings): SymlinkResult {
-  const { filePath } = generateLinuxFiledata(settings)
-  // let created = true;
-  // try {
-  //   writeFileSync(settings.destinationDirectory, fileContents);
-  // } catch (error) {
-  //   created = false;
-  //   log.error(`Could not create linux shortcut: ${error}`)
-  // }
+  const { fileContents, filePath } = generateLinuxFiledata(settings)
+  let created = true
+  try {
+    writeFileSync(settings.destinationDirectory, fileContents)
+    log.info(`Created linux symling: ${filePath}`)
+  } catch (error) {
+    created = false
+    log.error(`Could not create linux symlink: ${error}`)
+  }
 
-  // if (created && settings.chmod) {
-  //   try {
-  //     chmodSync()
-  //   }
-  // }
+  if (created && settings.chmod) {
+    try {
+      chmodSync(filePath, '755')
+    } catch (error) {
+      log.error(`Could not chmod the symlink: ${error}`)
+    }
+  }
 
   return {
     source: settings.sourcePath,
