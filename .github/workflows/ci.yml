@@ -104,13 +104,13 @@ jobs:
         uses: ./
         with:
           source-path: ./test.txt
-          destination-path: ./test-symlink
+          destination-path: ./test-symlink.lnk
 
       - name: Test Symlink
         id: test-symlink
         run: |
           $sourcePath="${{ steps.run-symlink.outputs.source-path }}"
-          $outputPath="${{ steps.run-symlink.outputs.output-path }}.lnk"
+          $outputPath="${{ steps.run-symlink.outputs.output-path }}"
           Write-Host "sourcePath: $sourcePath"
           Write-Host "outputPath: $outputPath"
           # Check if the output path is a shortcut

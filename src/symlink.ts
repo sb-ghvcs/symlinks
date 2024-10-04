@@ -1,3 +1,4 @@
+import * as core from '@actions/core'
 import * as fs from 'fs'
 import * as path from 'path'
 import { isLinux, isWindows } from './os-helper'
@@ -17,9 +18,9 @@ export async function symlink(
   source: string
   destination: string
 }> {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     if (!sourcePath || !destinationPath) {
-      throw new Error('Source and destination paths must not be empty')
+      reject('Source and destination paths must not be empty')
     }
 
     const absoluteSourcePath = path.resolve(sourcePath)
@@ -42,12 +43,12 @@ export async function symlink(
         } else if (override) {
           fs.unlinkSync(absoluteDestPath)
         } else {
-          throw new Error(
+          reject(
             `Destination path '${absoluteDestPath}' already exists and does not point to the source path`
           )
         }
       } else if (!override) {
-        throw new Error(`Destination path '${absoluteDestPath}' already exists`)
+        reject(`Destination path '${absoluteDestPath}' already exists`)
       }
     }
 
@@ -56,6 +57,7 @@ export async function symlink(
     } else if (isWindows()) {
       // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
       const shortcut = require('windows-shortcuts')
+      core.debug(`Creating shortcut for ${absoluteSourcePath} to ${absoluteDestPath}`)
       shortcut.create(
         absoluteDestPath,
         { target: absoluteSourcePath },
@@ -65,7 +67,7 @@ export async function symlink(
         }
       )
     } else {
-      throw new Error('Unsupported OS')
+      reject('Unsupported OS')
     }
 
     resolve({ source: absoluteSourcePath, destination: absoluteDestPath })
