@@ -63,7 +63,8 @@ jobs:
         uses: ./
         with:
           source-path: ./test.txt
-          destination-path: ./test-symlink.txt
+          destination-directory: ./
+          symlink-name: test-symlink.lnk
 
       - name: Test Symlink
         id: test-symlink
@@ -104,7 +105,8 @@ jobs:
         uses: ./
         with:
           source-path: ./test.txt
-          destination-path: ./test-symlink.lnk
+          destination-directory: ./
+          symlink-name: test-symlink.lnk
 
       - name: Test Symlink
         id: test-symlink
