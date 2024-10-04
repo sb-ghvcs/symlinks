@@ -1,4 +1,4 @@
-name: 'Symlinks'
+name: 'actions-symlinks'
 description: 'Create symlinks or shortcuts for self-hosted runners'
 author: 'sb-ghvcs'
 
