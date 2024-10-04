@@ -119,8 +119,9 @@ jobs:
           if (Test-Path $outputPath -PathType Leaf) {
             $shell = New-Object -ComObject WScript.Shell
             $shortcut = $shell.CreateShortcut($outputPath)
-            Write-Host "Comparing Shortcut Target: $shortcut.TargetPath to Source: $sourcePath"
-            if ($shortcut.TargetPath -eq $sourcePath) {
+            $shortcutTarget = $shortcut.TargetPath
+            Write-Host "Comparing Shortcut Target: $shortcutTarget to Source: $sourcePath"
+            if ($shortcutTarget -eq $sourcePath) {
               Write-Host "The output path $outputPath is a shortcut to the source path $sourcePath."
             } else {
               Write-Host "The output path $outputPath is not a shortcut to the source path $sourcePath"
