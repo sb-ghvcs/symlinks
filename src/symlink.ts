@@ -1,6 +1,6 @@
 import { isLinux, isWindows } from '@actions/core/lib/platform'
 import { ISettings } from './settings'
-// import { generateLinuxFiledata } from './os-helpers/linux-helper'
+import { generateLinuxFiledata } from './os-helpers/linux-helper'
 // import { chmodSync, writeFileSync } from 'fs'
 // import { log } from './log'
 
@@ -26,7 +26,7 @@ export async function symlink(settings: ISettings): Promise<SymlinkResult> {
 }
 
 function createLinuxSymlink(settings: ISettings): SymlinkResult {
-  // const fileContents = generateLinuxFiledata(settings)
+  const { filePath } = generateLinuxFiledata(settings)
   // let created = true;
   // try {
   //   writeFileSync(settings.destinationDirectory, fileContents);
@@ -43,7 +43,7 @@ function createLinuxSymlink(settings: ISettings): SymlinkResult {
 
   return {
     source: settings.sourcePath,
-    destination: `${settings.destinationDirectory}/${settings.symlinkName}`
+    destination: filePath
   }
 }
 

@@ -81,10 +81,16 @@ export class LinuxHelper implements IOsHelper {
   }
 }
 
-export function generateLinuxFiledata(settings: ISettings): string {
+interface FileData {
+  fileContents: string
+  filePath: string
+}
+
+export function generateLinuxFiledata(settings: ISettings): FileData {
   let type = 'Type=Application'
   let terminal = 'Terminal=false'
   let exec = 'Exec="' + settings.sourcePath + '"'
+  const parsedName = path.parse(settings.sourcePath).name
   let name = 'Name=' + path.parse(settings.sourcePath).name
   let comment = ''
   let icon = ''
@@ -124,5 +130,11 @@ export function generateLinuxFiledata(settings: ISettings): string {
     .filter(Boolean)
     .join('\n')
 
-  return fileContents
+  return {
+    fileContents,
+    filePath: path.join(
+      settings.destinationDirectory,
+      settings.symlinkName ?? parsedName
+    )
+  }
 }

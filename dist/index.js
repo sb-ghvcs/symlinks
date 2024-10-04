@@ -26036,6 +26036,7 @@ function generateLinuxFiledata(settings) {
     let type = 'Type=Application';
     let terminal = 'Terminal=false';
     let exec = 'Exec="' + settings.sourcePath + '"';
+    const parsedName = path_1.default.parse(settings.sourcePath).name;
     let name = 'Name=' + path_1.default.parse(settings.sourcePath).name;
     let comment = '';
     let icon = '';
@@ -26072,7 +26073,10 @@ function generateLinuxFiledata(settings) {
     ]
         .filter(Boolean)
         .join('\n');
-    return fileContents;
+    return {
+        fileContents,
+        filePath: path_1.default.join(settings.destinationDirectory, settings.symlinkName ?? parsedName)
+    };
 }
 
 
@@ -26215,6 +26219,7 @@ exports.WindowsHelper = WindowsHelper;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.symlink = symlink;
 const platform_1 = __nccwpck_require__(8968);
+const linux_helper_1 = __nccwpck_require__(2205);
 async function symlink(settings) {
     return new Promise((resolve, reject) => {
         try {
@@ -26234,7 +26239,7 @@ async function symlink(settings) {
     });
 }
 function createLinuxSymlink(settings) {
-    // const fileContents = generateLinuxFiledata(settings)
+    const { filePath } = (0, linux_helper_1.generateLinuxFiledata)(settings);
     // let created = true;
     // try {
     //   writeFileSync(settings.destinationDirectory, fileContents);
@@ -26249,7 +26254,7 @@ function createLinuxSymlink(settings) {
     // }
     return {
         source: settings.sourcePath,
-        destination: `${settings.destinationDirectory}/${settings.symlinkName}`
+        destination: filePath
     };
 }
 function createWindowsSymlink(settings) {
