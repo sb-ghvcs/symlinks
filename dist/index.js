@@ -25823,7 +25823,7 @@ class InputHelper {
             const validatedIconPath = linuxHelper.getIcon(iconPath, sourceDirectory);
             result.iconPath = validatedIconPath;
         }
-        result.type = shortcutType;
+        result.type = linuxHelper.getType(validatedSourcePath, shortcutType);
         result.terminal = core.getBooleanInput('terminal');
         result.chmod = core.getBooleanInput('chmod');
         return result;
@@ -26229,7 +26229,7 @@ function createLinuxSymlink(settings) {
         ? path_1.default.join(settings.destinationDirectory, settings.symlinkName)
         : path_1.default.join(settings.destinationDirectory, sourcePathName);
     log_1.log.info(`Creating symlink ${symlinkPath} -> ${settings.sourcePath}`);
-    fs.symlink(settings.sourcePath, symlinkPath, settings.type ?? 'file', err => {
+    fs.symlink(settings.sourcePath, symlinkPath, settings.type, err => {
         if (err) {
             throw new Error(`Failed to create symlink: ${err.message}`);
         }

@@ -33,7 +33,7 @@ function createLinuxSymlink(settings: ISettings): SymlinkResult {
 
   log.info(`Creating symlink ${symlinkPath} -> ${settings.sourcePath}`)
 
-  fs.symlink(settings.sourcePath, symlinkPath, settings.type ?? 'file', err => {
+  fs.symlink(settings.sourcePath, symlinkPath, settings.type, err => {
     if (err) {
       throw new Error(`Failed to create symlink: ${err.message}`)
     }

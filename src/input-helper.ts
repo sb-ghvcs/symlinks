@@ -108,7 +108,7 @@ class InputHelper {
       const validatedIconPath = linuxHelper.getIcon(iconPath, sourceDirectory)
       result.iconPath = validatedIconPath
     }
-    result.type = shortcutType
+    result.type = linuxHelper.getType(validatedSourcePath, shortcutType)
     result.terminal = core.getBooleanInput('terminal')
     result.chmod = core.getBooleanInput('chmod')
     return result
