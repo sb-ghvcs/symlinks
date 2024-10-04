@@ -26305,15 +26305,16 @@ function createWindowsSymlink(settings) {
             throw new Error(`Failed to create symlink: ${result.error.message}`);
         }
         if (result.stderr) {
-            log_1.log.error(result.stderr.toString());
+            throw new Error(`Failed to create symlink: ${result.stderr.toString()}`);
         }
         if (result.stdout) {
             log_1.log.info(result.stdout.toString());
         }
         log_1.log.info(`Created symlink successfully`);
     }
-    catch (err) {
-        throw new Error(`Failed to create symlink: ${err}`);
+    catch (error) {
+        log_1.log.error(`Failed to create symlink: ${error}`);
+        throw new Error(`Failed to create symlink`);
     }
     return {
         source: settings.sourcePath,
