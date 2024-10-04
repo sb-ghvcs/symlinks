@@ -109,14 +109,18 @@ jobs:
       - name: Test Symlink
         id: test-symlink
         run: |
+          Get-ChildItem -Path "." -File
           $sourcePath="${{ steps.run-symlink.outputs.source-path }}"
           $outputPath="${{ steps.run-symlink.outputs.output-path }}"
           Write-Host "sourcePath: $sourcePath"
           Write-Host "outputPath: $outputPath"
+          $resolvedSourcePath = (Resolve-Path $sourcePath).Path
+          Write-Host "resolvedSourcePath: $resolvedSourcePath"
           # Check if the output path is a shortcut
           if (Test-Path $outputPath -PathType Leaf) {
             $shortcut = New-Object -ComObject WScript.Shell
             $shortcutTarget = $shortcut.CreateShortcut($outputPath).TargetPath
+            Write-Host "Comparing Shortcut Target: $shortcutTarget to Source: $resolvedSourcePath"
             if ($shortcutTarget -eq (Resolve-Path $sourcePath).Path) {
               Write-Host "The output path $outputPath is a shortcut to the source path $sourcePath."
             } else {
@@ -125,6 +129,5 @@ jobs:
             }
           } else {
             Write-Host "The output path $outputPath does not exist or is not a file."
-            Get-ChildItem -Path "." -File
             exit 1
           }
