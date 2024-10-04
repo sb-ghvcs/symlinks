@@ -26062,8 +26062,13 @@ async function symlink(sourcePath, destinationPath, override = false) {
             shortcut.create(absoluteDestPath, { target: absoluteSourcePath }, 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (err) => {
-                if (err)
-                    throw err;
+                if (err) {
+                    core.error(err);
+                    reject(err);
+                }
+                else {
+                    core.debug(`Created windows shortcut for ${absoluteSourcePath}`);
+                }
             });
         }
         else {
