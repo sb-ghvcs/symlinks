@@ -1,4 +1,4 @@
-import which from 'which'
+// import which from 'which'
 import path from 'path'
 import * as fs from 'fs'
 
@@ -18,8 +18,9 @@ export function getParentDirectory(inputPath: string): string {
 }
 
 export function resolvePATH(filePath: string): string {
-  if (filePath) {
-    return which.sync(filePath, { nothrow: true }) || filePath
-  }
-  return filePath
+  // if (filePath) {
+  //   return which.sync(filePath, { nothrow: true }) || filePath
+  // }
+  // return filePath
+  return path.resolve(filePath)
 }

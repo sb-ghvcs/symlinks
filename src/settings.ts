@@ -4,7 +4,7 @@ export type LinuxType = 'Link' | 'Directory' | 'Application'
 export interface ISettings {
   sourcePath: string
   destinationDirectory: string
-  symlinkName: string
+  symlinkName?: string
   comment?: string
   iconPath?: string
   arguments?: string

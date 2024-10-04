@@ -3,7 +3,7 @@ import path from 'path'
 import { resolvePATH } from '../fs-helper'
 import { log } from '../log'
 import { IOsHelper, resolveTilde } from './os-helper'
-import { LinuxType } from '../settings'
+import { ISettings, LinuxType } from '../settings'
 
 export class LinuxHelper implements IOsHelper {
   getResolvedPath(filePath: string, type?: LinuxType): string {
@@ -34,7 +34,7 @@ export class LinuxHelper implements IOsHelper {
         )
       }
     }
-    return resolvePATH(substitudedPath)
+    return resolvedPath
   }
 
   getIcon(iconPath: string, sourceDirectory = ''): string | undefined {
@@ -79,4 +79,50 @@ export class LinuxHelper implements IOsHelper {
     }
     return type
   }
+}
+
+export function generateLinuxFiledata(settings: ISettings): string {
+  let type = 'Type=Application'
+  let terminal = 'Terminal=false'
+  let exec = 'Exec="' + settings.sourcePath + '"'
+  let name = 'Name=' + path.parse(settings.sourcePath).name
+  let comment = ''
+  let icon = ''
+
+  if (settings.type) {
+    type = 'Type=' + settings.type
+  }
+  if (settings.terminal) {
+    terminal = 'Terminal=' + settings.terminal
+  }
+  if (settings.symlinkName) {
+    name = 'Name=' + settings.symlinkName
+  }
+  if (settings.comment) {
+    comment = 'Comment=' + settings.comment
+  }
+  if (settings.iconPath) {
+    icon = 'Icon=' + settings.iconPath
+  }
+  if (settings.arguments) {
+    exec = exec + ' ' + settings.arguments
+  }
+
+  // File format details:
+  // https://wiki.archlinux.org/index.php/Desktop_entries
+  const fileContents = [
+    '#!/user/bin/env xdg-open',
+    '[Desktop Entry]',
+    'Version=1.0',
+    type,
+    terminal,
+    exec,
+    name,
+    comment,
+    icon
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  return fileContents
 }

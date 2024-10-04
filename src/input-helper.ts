@@ -8,7 +8,12 @@ import { isLinux, isWindows } from '@actions/core/lib/platform'
 
 class InputHelper {
   private static getCommonInputs(result: ISettings): ISettings {
-    result.symlinkName = core.getInput('symlink-name')
+    const symlinkName = core.getInput('symlink-name')
+    if (symlinkName.length === 0) {
+      result.symlinkName = undefined
+    } else {
+      result.symlinkName = symlinkName
+    }
     const comment = core.getInput('comment')
     if (comment.length === 0) {
       result.comment = undefined

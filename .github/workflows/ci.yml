@@ -64,7 +64,6 @@ jobs:
         with:
           source-path: ./test.txt
           destination-directory: ./
-          symlink-name: test-symlink.lnk
 
       - name: Test Symlink
         id: test-symlink
@@ -106,7 +105,6 @@ jobs:
         with:
           source-path: ./test.txt
           destination-directory: ./
-          symlink-name: test-symlink.lnk
 
       - name: Test Symlink
         id: test-symlink
