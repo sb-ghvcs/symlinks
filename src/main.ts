@@ -13,7 +13,10 @@ export async function run(): Promise<void> {
     // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
     core.debug(`Creating symlink for ${sourcePath} to ${destinationPath}...`)
 
-    const [sourceSymlinkPath, createdSymlinkPath] = await symlink(sourcePath, destinationPath)
+    const [sourceSymlinkPath, createdSymlinkPath] = await symlink(
+      sourcePath,
+      destinationPath
+    )
 
     // Set outputs for other workflow steps to use
     core.setOutput('source-path', sourceSymlinkPath)

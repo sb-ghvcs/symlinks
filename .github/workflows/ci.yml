@@ -64,7 +64,7 @@ jobs:
         with:
           sourcePath: ./test.txt
           destinationPath: ./test-symlink.txt
-      
+
       - name: Test Symlink
         id: test-symlink
         run: |
@@ -105,7 +105,7 @@ jobs:
         with:
           sourcePath: ./test.txt
           destinationPath: ./test-symlink.lnk
-      
+
       - name: Test Symlink
         id: test-symlink
         run: |
