@@ -25965,7 +25965,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.LinuxHelper = void 0;
-exports.generateLinuxFiledata = generateLinuxFiledata;
 const fs_1 = __nccwpck_require__(9896);
 const path_1 = __importDefault(__nccwpck_require__(6928));
 const fs_helper_1 = __nccwpck_require__(6513);
@@ -25979,7 +25978,7 @@ class LinuxHelper {
         }
         const resolvedPath = (0, fs_helper_1.resolvePATH)(substitudedPath);
         const resolvedType = this.getType(resolvedPath, type);
-        if (resolvedType === 'Application') {
+        if (resolvedType === 'file') {
             if (!(0, fs_1.existsSync)(resolvedPath)) {
                 throw new Error(`Could not find file: ${resolvedPath}`);
             }
@@ -25987,7 +25986,7 @@ class LinuxHelper {
                 throw new Error(`${resolvedPath} is a directory. Please provide a file path instead.`);
             }
         }
-        else if (resolvedType === 'Directory') {
+        else {
             if (!(0, fs_1.existsSync)(resolvedPath)) {
                 throw new Error(`Could not find directory: ${resolvedPath}`);
             }
@@ -26023,67 +26022,19 @@ class LinuxHelper {
     }
     getType(filePath, type) {
         if (!type) {
-            if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
-                return 'Link';
+            if ((0, fs_1.existsSync)(filePath) && (0, fs_1.lstatSync)(filePath).isDirectory()) {
+                return 'dir';
             }
-            else if ((0, fs_1.existsSync)(filePath) && (0, fs_1.lstatSync)(filePath).isDirectory()) {
-                return 'Directory';
-            }
-            return 'Application';
+            return 'file';
         }
-        if (type !== 'Link' && type !== 'Directory' && type !== 'Application') {
-            return 'Application';
+        if (type !== 'file' && type !== 'dir') {
+            log_1.log.error(`Invalid type: ${type}. Defaulting to file.`);
+            return 'file';
         }
         return type;
     }
 }
 exports.LinuxHelper = LinuxHelper;
-function generateLinuxFiledata(settings) {
-    let type = 'Type=Application';
-    let terminal = 'Terminal=false';
-    let exec = 'Exec="' + settings.sourcePath + '"';
-    const parsedName = path_1.default.parse(settings.sourcePath).name;
-    let name = 'Name=' + path_1.default.parse(settings.sourcePath).name;
-    let comment = '';
-    let icon = '';
-    if (settings.type) {
-        type = 'Type=' + settings.type;
-    }
-    if (settings.terminal) {
-        terminal = 'Terminal=' + settings.terminal;
-    }
-    if (settings.symlinkName) {
-        name = 'Name=' + settings.symlinkName;
-    }
-    if (settings.comment) {
-        comment = 'Comment=' + settings.comment;
-    }
-    if (settings.iconPath) {
-        icon = 'Icon=' + settings.iconPath;
-    }
-    if (settings.arguments) {
-        exec = exec + ' ' + settings.arguments;
-    }
-    // File format details:
-    // https://wiki.archlinux.org/index.php/Desktop_entries
-    const fileContents = [
-        '#!/user/bin/env xdg-open',
-        '[Desktop Entry]',
-        'Version=1.0',
-        type,
-        terminal,
-        exec,
-        name,
-        comment,
-        icon
-    ]
-        .filter(Boolean)
-        .join('\n');
-    return {
-        fileContents,
-        filePath: path_1.default.join(settings.destinationDirectory, settings.symlinkName ?? parsedName)
-    };
-}
 
 
 /***/ }),
@@ -26218,16 +26169,42 @@ exports.WindowsHelper = WindowsHelper;
 /***/ }),
 
 /***/ 3428:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.symlink = symlink;
 const platform_1 = __nccwpck_require__(8968);
-const linux_helper_1 = __nccwpck_require__(2205);
-const fs_1 = __nccwpck_require__(9896);
+const fs = __importStar(__nccwpck_require__(9896));
 const log_1 = __nccwpck_require__(5625);
+const path_1 = __importDefault(__nccwpck_require__(6928));
 async function symlink(settings) {
     return new Promise((resolve, reject) => {
         try {
@@ -26247,27 +26224,27 @@ async function symlink(settings) {
     });
 }
 function createLinuxSymlink(settings) {
-    const { fileContents, filePath } = (0, linux_helper_1.generateLinuxFiledata)(settings);
-    let created = true;
-    try {
-        (0, fs_1.writeFileSync)(filePath, fileContents);
-        log_1.log.info(`Created linux symling: ${filePath}`);
-    }
-    catch (error) {
-        created = false;
-        log_1.log.error(`Could not create linux symlink: ${error}`);
-    }
-    if (created && settings.chmod) {
-        try {
-            (0, fs_1.chmodSync)(filePath, '755');
+    const sourcePathName = path_1.default.basename(settings.sourcePath);
+    const symlinkPath = settings.symlinkName
+        ? path_1.default.join(settings.destinationDirectory, settings.symlinkName)
+        : path_1.default.join(settings.destinationDirectory, sourcePathName);
+    log_1.log.info(`Creating symlink ${symlinkPath} -> ${settings.sourcePath}`);
+    fs.symlink(settings.sourcePath, symlinkPath, settings.type ?? 'file', err => {
+        if (err) {
+            throw new Error(`Failed to create symlink: ${err.message}`);
         }
-        catch (error) {
-            log_1.log.error(`Could not chmod the symlink: ${error}`);
-        }
+    });
+    log_1.log.info(`Created symlink successfully`);
+    if (settings.chmod) {
+        fs.chmod(symlinkPath, 0o755, err => {
+            if (err) {
+                throw new Error(`Failed to change permissions: ${err.message}`);
+            }
+        });
     }
     return {
         source: settings.sourcePath,
-        destination: filePath
+        destination: symlinkPath
     };
 }
 function createWindowsSymlink(settings) {

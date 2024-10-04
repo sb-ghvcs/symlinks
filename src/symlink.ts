@@ -1,8 +1,8 @@
 import { isLinux, isWindows } from '@actions/core/lib/platform'
 import { ISettings } from './settings'
-import { generateLinuxFiledata } from './os-helpers/linux-helper'
-import { chmodSync, writeFileSync } from 'fs'
+import * as fs from 'fs'
 import { log } from './log'
+import path from 'path'
 
 interface SymlinkResult {
   source: string
@@ -26,27 +26,31 @@ export async function symlink(settings: ISettings): Promise<SymlinkResult> {
 }
 
 function createLinuxSymlink(settings: ISettings): SymlinkResult {
-  const { fileContents, filePath } = generateLinuxFiledata(settings)
-  let created = true
-  try {
-    writeFileSync(filePath, fileContents)
-    log.info(`Created linux symling: ${filePath}`)
-  } catch (error) {
-    created = false
-    log.error(`Could not create linux symlink: ${error}`)
-  }
+  const sourcePathName = path.basename(settings.sourcePath)
+  const symlinkPath = settings.symlinkName
+    ? path.join(settings.destinationDirectory, settings.symlinkName)
+    : path.join(settings.destinationDirectory, sourcePathName)
 
-  if (created && settings.chmod) {
-    try {
-      chmodSync(filePath, '755')
-    } catch (error) {
-      log.error(`Could not chmod the symlink: ${error}`)
+  log.info(`Creating symlink ${symlinkPath} -> ${settings.sourcePath}`)
+
+  fs.symlink(settings.sourcePath, symlinkPath, settings.type ?? 'file', err => {
+    if (err) {
+      throw new Error(`Failed to create symlink: ${err.message}`)
     }
+  })
+  log.info(`Created symlink successfully`)
+
+  if (settings.chmod) {
+    fs.chmod(symlinkPath, 0o755, err => {
+      if (err) {
+        throw new Error(`Failed to change permissions: ${err.message}`)
+      }
+    })
   }
 
   return {
     source: settings.sourcePath,
-    destination: filePath
+    destination: symlinkPath
   }
 }
 

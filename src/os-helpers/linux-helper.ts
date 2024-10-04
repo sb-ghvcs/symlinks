@@ -3,7 +3,7 @@ import path from 'path'
 import { resolvePATH } from '../fs-helper'
 import { log } from '../log'
 import { IOsHelper, resolveTilde } from './os-helper'
-import { ISettings, LinuxType } from '../settings'
+import { LinuxType } from '../settings'
 
 export class LinuxHelper implements IOsHelper {
   getResolvedPath(filePath: string, type?: LinuxType): string {
@@ -15,7 +15,7 @@ export class LinuxHelper implements IOsHelper {
     }
     const resolvedPath = resolvePATH(substitudedPath)
     const resolvedType = this.getType(resolvedPath, type)
-    if (resolvedType === 'Application') {
+    if (resolvedType === 'file') {
       if (!existsSync(resolvedPath)) {
         throw new Error(`Could not find file: ${resolvedPath}`)
       }
@@ -24,7 +24,7 @@ export class LinuxHelper implements IOsHelper {
           `${resolvedPath} is a directory. Please provide a file path instead.`
         )
       }
-    } else if (resolvedType === 'Directory') {
+    } else {
       if (!existsSync(resolvedPath)) {
         throw new Error(`Could not find directory: ${resolvedPath}`)
       }
@@ -67,74 +67,15 @@ export class LinuxHelper implements IOsHelper {
 
   getType(filePath: string, type?: LinuxType): LinuxType {
     if (!type) {
-      if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
-        return 'Link'
-      } else if (existsSync(filePath) && lstatSync(filePath).isDirectory()) {
-        return 'Directory'
+      if (existsSync(filePath) && lstatSync(filePath).isDirectory()) {
+        return 'dir'
       }
-      return 'Application'
+      return 'file'
     }
-    if (type !== 'Link' && type !== 'Directory' && type !== 'Application') {
-      return 'Application'
+    if (type !== 'file' && type !== 'dir') {
+      log.error(`Invalid type: ${type}. Defaulting to file.`)
+      return 'file'
     }
     return type
-  }
-}
-
-interface FileData {
-  fileContents: string
-  filePath: string
-}
-
-export function generateLinuxFiledata(settings: ISettings): FileData {
-  let type = 'Type=Application'
-  let terminal = 'Terminal=false'
-  let exec = 'Exec="' + settings.sourcePath + '"'
-  const parsedName = path.parse(settings.sourcePath).name
-  let name = 'Name=' + path.parse(settings.sourcePath).name
-  let comment = ''
-  let icon = ''
-
-  if (settings.type) {
-    type = 'Type=' + settings.type
-  }
-  if (settings.terminal) {
-    terminal = 'Terminal=' + settings.terminal
-  }
-  if (settings.symlinkName) {
-    name = 'Name=' + settings.symlinkName
-  }
-  if (settings.comment) {
-    comment = 'Comment=' + settings.comment
-  }
-  if (settings.iconPath) {
-    icon = 'Icon=' + settings.iconPath
-  }
-  if (settings.arguments) {
-    exec = exec + ' ' + settings.arguments
-  }
-
-  // File format details:
-  // https://wiki.archlinux.org/index.php/Desktop_entries
-  const fileContents = [
-    '#!/user/bin/env xdg-open',
-    '[Desktop Entry]',
-    'Version=1.0',
-    type,
-    terminal,
-    exec,
-    name,
-    comment,
-    icon
-  ]
-    .filter(Boolean)
-    .join('\n')
-
-  return {
-    fileContents,
-    filePath: path.join(
-      settings.destinationDirectory,
-      settings.symlinkName ?? parsedName
-    )
   }
 }
