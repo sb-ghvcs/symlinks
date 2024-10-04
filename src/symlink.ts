@@ -3,6 +3,7 @@ import { ISettings } from './settings'
 import * as fs from 'fs'
 import { log } from './log'
 import path from 'path'
+import { spawn } from 'child_process'
 
 interface SymlinkResult {
   source: string
@@ -56,8 +57,65 @@ function createLinuxSymlink(settings: ISettings): SymlinkResult {
 }
 
 function createWindowsSymlink(settings: ISettings): SymlinkResult {
+  const vbsScript = settings.vbsPath
+  if (!vbsScript) {
+    throw new Error('Missing VBS Script for creating windows shortcut')
+  }
+
+  const windowModes = {
+    normal: '1',
+    maximized: '3',
+    minimized: '7'
+  }
+
+  const sourcePathName = path.basename(settings.sourcePath)
+  const outputPath = settings.symlinkName
+    ? path.join(settings.destinationDirectory, settings.symlinkName)
+    : path.join(settings.destinationDirectory, sourcePathName)
+  log.info(`Creating symlink ${outputPath} -> ${settings.sourcePath}`)
+  const sourcePath = settings.sourcePath
+  let args = settings.arguments || ''
+  let comment = settings.comment || ''
+  const cwd = settings.workingDirectory || ''
+  let icon = settings.iconPath
+  const windowMode = windowModes[settings.windowMode || 'normal']
+  let hotKey = settings.hotKey || ''
+
+  function replaceDoubleQuotes(input: string): string {
+    return input.split('"').join('__DOUBLEQUOTE__')
+  }
+  args = replaceDoubleQuotes(args)
+  comment = replaceDoubleQuotes(comment)
+  hotKey = replaceDoubleQuotes(hotKey)
+
+  if (!icon) {
+    if (sourcePath.endsWith('.dll') || sourcePath.endsWith('.exe')) {
+      icon = sourcePath + ',0'
+    } else {
+      icon = sourcePath
+    }
+  }
+
+  const wscriptArguments = [
+    vbsScript,
+    outputPath,
+    sourcePath,
+    args,
+    comment,
+    cwd,
+    icon,
+    windowMode,
+    hotKey
+  ]
+
+  try {
+    spawn('wscript', wscriptArguments)
+    log.info(`Created symlink successfully`)
+  } catch (err) {
+    throw new Error(`Failed to create symlink: ${err}`)
+  }
   return {
     source: settings.sourcePath,
-    destination: `${settings.destinationDirectory}/${settings.symlinkName}`
+    destination: outputPath
   }
 }
