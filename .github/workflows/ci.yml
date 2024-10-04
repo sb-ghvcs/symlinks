@@ -44,8 +44,8 @@ jobs:
         id: npm-ci-test
         run: npm run ci-test
 
-  test-action:
-    name: GitHub Actions Test
+  test-action-linux:
+    name: Symlink Actions Test on Linux
     runs-on: ubuntu-latest
 
     steps:
@@ -53,12 +53,70 @@ jobs:
         id: checkout
         uses: actions/checkout@v4
 
-      - name: Test Local Action
-        id: test-action
+      - name: Create test file
+        id: create-test-file
+        run: |
+          echo "test file contents in test.txt" >> test.txt
+
+      - name: Run Symlink
+        id: run-symlink
         uses: ./
         with:
-          milliseconds: 2000
+          sourcePath: ./test.txt
+          destinationPath: ./test-symlink.txt
+      
+      - name: Test Symlink
+        id: test-symlink
+        run: |
+          sourcePath=${{ steps.run-symlink.outputs.source-path }}
+          outputPath=${{ steps.run-symlink.outputs.output-path }}
+          echo "sourcePath: $sourcePath"
+          echo "outputPath: $outputPath"
+          if [ -L "$outputPath" ]; then
+            target=$(readlink -f "$outputPath")
+            if [ "$target" = "$sourcePath" ]; then
+              echo "Symlink points to the correct target."
+            else
+              echo "Symlink does not point to the correct target."
+              exit 1
+            fi
+          else
+            echo "$outputPath is not a symlink."
+            exit 1
+          fi
 
-      - name: Print Output
-        id: output
-        run: echo "${{ steps.test-action.outputs.time }}"
+  test-action-windows:
+    name: Symlink Actions Test on Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: Create test file
+        id: create-test-file
+        run: |
+          echo test file contents in test.txt >> test.txt
+
+      - name: Run Symlink
+        id: run-symlink
+        uses: ./
+        with:
+          sourcePath: ./test.txt
+          destinationPath: ./test-symlink.lnk
+      
+      - name: Test Symlink
+        id: test-symlink
+        run: |
+          sourcePath=${{ steps.run-symlink.outputs.source-path }}
+          outputPath=${{ steps.run-symlink.outputs.output-path }}
+          Write-Host "sourcePath: $sourcePath"
+          Write-Host "outputPath: $outputPath"
+          $shortcut = (New-Object -ComObject WScript.Shell).CreateShortcut($outputPath)
+          if ($shortcut.TargetPath -eq $sourcePath) {
+            Write-Host "Shortcut points to the correct target."
+          } else {
+            Write-Host "Shortcut does not point to the correct target."
+            exit 1
+          }

@@ -1,23 +1,27 @@
-name: 'The name of your action here'
-description: 'Provide a description here'
-author: 'Your name or organization here'
+name: 'Symlinks'
+description: 'Create symlinks or shortcuts for self-hosted runners'
+author: 'sb-ghvcs'
 
 # Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
-  icon: 'heart'
-  color: 'red'
+  icon: 'file-plus'
+  color: 'gray-dark'
 
 # Define your inputs here.
 inputs:
-  milliseconds:
-    description: 'Your input description here'
+  source-path:
+    description: 'The source path to create the symlink or shortcut for'
     required: true
-    default: '1000'
+  destination-path:
+    description: 'The destination path to create the symlink or shortcut to'
+    required: true
 
 # Define your outputs here.
 outputs:
-  time:
-    description: 'Your output description here'
+  source-path:
+    description: 'Absolute path to the source of the symlink'
+  output-path:
+    description: 'Absolute path to the created symlink'
 
 runs:
   using: node20
