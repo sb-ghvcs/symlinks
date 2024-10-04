@@ -44,8 +44,8 @@ jobs:
         id: npm-ci-test
         run: npm run ci-test
 
-  test-action:
-    name: GitHub Actions Test
+  test-action-linux:
+    name: Symlink Actions Test on Linux
     runs-on: ubuntu-latest
 
     steps:
@@ -53,12 +53,73 @@ jobs:
         id: checkout
         uses: actions/checkout@v4
 
-      - name: Test Local Action
-        id: test-action
+      - name: Create test file
+        id: create-test-file
+        run: |
+          echo "test file contents in test.txt" >> test.txt
+
+      - name: Run Symlink
+        id: run-symlink
         uses: ./
         with:
-          milliseconds: 2000
+          source-path: ./test.txt
+          destination-path: ./test-symlink.txt
 
-      - name: Print Output
-        id: output
-        run: echo "${{ steps.test-action.outputs.time }}"
+      - name: Test Symlink
+        id: test-symlink
+        run: |
+          sourcePath=${{ steps.run-symlink.outputs.source-path }}
+          outputPath=${{ steps.run-symlink.outputs.output-path }}
+          echo "sourcePath: $sourcePath"
+          echo "outputPath: $outputPath"
+          if [ -L "$outputPath" ]; then
+            target=$(readlink -f "$outputPath")
+            if [ "$target" = "$sourcePath" ]; then
+              echo "Symlink points to the correct target."
+            else
+              echo "Symlink does not point to the correct target."
+              exit 1
+            fi
+          else
+            echo "$outputPath is not a symlink."
+            exit 1
+          fi
+
+  test-action-windows:
+    name: Symlink Actions Test on Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        id: checkout
+        uses: actions/checkout@v4
+
+      - name: Create test file
+        id: create-test-file
+        run: |
+          echo test file contents in test.txt >> test.txt
+
+      - name: Run Symlink
+        id: run-symlink
+        uses: ./
+        with:
+          source-path: ./test.txt
+          destination-path: ./test-symlink.lnk
+
+      - name: Test Symlink
+        id: test-symlink
+        run: |
+          Get-ChildItem -Path "." -File
+          $sourcePath=(Resolve-Path "${{ steps.run-symlink.outputs.source-path }}").Path
+          $outputPath=(Resolve-Path "${{ steps.run-symlink.outputs.output-path }}").Path
+          Write-Host "sourcePath: $sourcePath"
+          Write-Host "outputPath: $outputPath"
+
+          # Check if the output path is a shortcut
+          if (Test-Path $outputPath -PathType Leaf) {
+            Write-Host "The output path $outputPath is a file."
+            # TODO: Actually validate if the symlink points to the same file
+          } else {
+            Write-Host "The output path $outputPath does not exist or is not a file."
+            exit 1
+          }

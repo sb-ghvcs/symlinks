@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import { wait } from './wait'
+import { symlink } from './symlink'
 
 /**
  * The main function for the action.
@@ -7,18 +7,19 @@ import { wait } from './wait'
  */
 export async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
+    const sourcePath: string = core.getInput('source-path')
+    const destinationPath: string = core.getInput('destination-path')
+    const override: boolean = core.getBooleanInput('override')
 
-    // Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-    core.debug(`Waiting ${ms} milliseconds ...`)
-
-    // Log the current timestamp, wait, then log the new timestamp
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
+    const { source, destination } = await symlink(
+      sourcePath,
+      destinationPath,
+      override
+    )
 
     // Set outputs for other workflow steps to use
-    core.setOutput('time', new Date().toTimeString())
+    core.setOutput('source-path', source)
+    core.setOutput('output-path', destination)
   } catch (error) {
     // Fail the workflow run if an error occurs
     if (error instanceof Error) core.setFailed(error.message)
