@@ -70,8 +70,8 @@ function createWindowsSymlink(settings: ISettings): SymlinkResult {
 
   const sourcePathName = path.basename(settings.sourcePath)
   const outputPath = settings.symlinkName
-    ? path.join(settings.destinationDirectory, settings.symlinkName)
-    : path.join(settings.destinationDirectory, sourcePathName)
+    ? path.join(settings.destinationDirectory, settings.symlinkName + '.lnk')
+    : path.join(settings.destinationDirectory, sourcePathName + '.lnk')
   log.info(`Creating symlink ${outputPath} -> ${settings.sourcePath}`)
   const sourcePath = settings.sourcePath
   let args = settings.arguments || ''

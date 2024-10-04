@@ -26264,8 +26264,8 @@ function createWindowsSymlink(settings) {
     };
     const sourcePathName = path_1.default.basename(settings.sourcePath);
     const outputPath = settings.symlinkName
-        ? path_1.default.join(settings.destinationDirectory, settings.symlinkName)
-        : path_1.default.join(settings.destinationDirectory, sourcePathName);
+        ? path_1.default.join(settings.destinationDirectory, settings.symlinkName + '.lnk')
+        : path_1.default.join(settings.destinationDirectory, sourcePathName + '.lnk');
     log_1.log.info(`Creating symlink ${outputPath} -> ${settings.sourcePath}`);
     const sourcePath = settings.sourcePath;
     let args = settings.arguments || '';
