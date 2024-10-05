@@ -22,8 +22,8 @@ inputs:
     default: ''
   comment:
     description:
-      'Metadata file "comment" property. Description of what the shortcut would
-      open.'
+      '[WINDOWS ONLY] Metadata file "comment" property. Description of what the
+      shortcut would open.'
     required: false
     default: ''
   icon-path:
@@ -31,7 +31,8 @@ inputs:
     required: false
     default: ''
   arguments:
-    description: ' Additional arguments passed in to the end of your target'
+    description:
+      '[WINDOWS ONLY] Additional arguments passed in to the end of your target'
     required: false
     default: ''
   window-mode:
@@ -57,10 +58,6 @@ inputs:
       '[LINUX ONLY] Type of shortcut. Valid inputs: Link, Directory, Application'
     required: false
     default: ''
-  terminal:
-    description: '[LINUX ONLY] If the shortcut should run in a terminal'
-    required: false
-    default: false
   chmod:
     description:
       '[LINUX ONLY] If true, will apply a `chmod +x` (755) to the shortcut after

@@ -25639,55 +25639,13 @@ module.exports = {
 
 "use strict";
 
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getParentDirectory = getParentDirectory;
 exports.resolvePATH = resolvePATH;
-// import which from 'which'
 const path_1 = __importDefault(__nccwpck_require__(6928));
-const fs = __importStar(__nccwpck_require__(9896));
-function getParentDirectory(inputPath) {
-    // Check if the input path exists
-    if (!fs.existsSync(inputPath)) {
-        throw new Error('Path does not exist');
-    }
-    // Check if the input path is a directory
-    if (fs.statSync(inputPath).isDirectory()) {
-        return inputPath;
-    }
-    // If it's a file, return the parent directory
-    return path_1.default.dirname(inputPath);
-}
 function resolvePATH(filePath) {
-    // if (filePath) {
-    //   return which.sync(filePath, { nothrow: true }) || filePath
-    // }
-    // return filePath
     return path_1.default.resolve(filePath);
 }
 
@@ -25730,7 +25688,6 @@ exports.inputHelper = void 0;
 const core = __importStar(__nccwpck_require__(7484));
 const windows_helper_1 = __nccwpck_require__(1824);
 const linux_helper_1 = __nccwpck_require__(2205);
-const fs_helper_1 = __nccwpck_require__(6513);
 const fs_1 = __nccwpck_require__(9896);
 const platform_1 = __nccwpck_require__(8968);
 const path_1 = __importDefault(__nccwpck_require__(6928));
@@ -25768,13 +25725,12 @@ class InputHelper {
         const destinationDirectory = core.getInput('destination-directory');
         const validatedDestinationDirectory = windowsHelper.getResolvedPath(destinationDirectory);
         result.destinationDirectory = validatedDestinationDirectory;
-        const sourceDirectory = (0, fs_helper_1.getParentDirectory)(validatedSourcePath);
         const iconPath = core.getInput('icon-path');
         if (iconPath.length === 0) {
             result.iconPath = undefined;
         }
         else {
-            const validatedIconPath = windowsHelper.getIcon(iconPath, sourceDirectory);
+            const validatedIconPath = windowsHelper.getIcon(iconPath);
             result.iconPath = validatedIconPath;
         }
         const windowMode = core.getInput('window-mode');
@@ -25816,17 +25772,15 @@ class InputHelper {
         const destinationDirectory = core.getInput('destination-directory');
         const validatedDestinationDirectory = linuxHelper.getResolvedPath(destinationDirectory);
         result.destinationDirectory = validatedDestinationDirectory;
-        const sourceDirectory = (0, fs_helper_1.getParentDirectory)(validatedSourcePath);
         const iconPath = core.getInput('icon-path');
         if (iconPath.length === 0) {
             result.iconPath = undefined;
         }
         else {
-            const validatedIconPath = linuxHelper.getIcon(iconPath, sourceDirectory);
+            const validatedIconPath = linuxHelper.getIcon(iconPath);
             result.iconPath = validatedIconPath;
         }
         result.type = linuxHelper.getType(validatedSourcePath, shortcutType);
-        result.terminal = core.getBooleanInput('terminal');
         result.chmod = core.getBooleanInput('chmod');
         return result;
     }
@@ -25958,17 +25912,13 @@ async function run() {
 /***/ }),
 
 /***/ 2205:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.LinuxHelper = void 0;
 const fs_1 = __nccwpck_require__(9896);
-const path_1 = __importDefault(__nccwpck_require__(6928));
 const fs_helper_1 = __nccwpck_require__(6513);
 const log_1 = __nccwpck_require__(5625);
 const os_helper_1 = __nccwpck_require__(6071);
@@ -25998,21 +25948,18 @@ class LinuxHelper {
         }
         return resolvedPath;
     }
-    getIcon(iconPath, sourceDirectory = '') {
-        let resolvedPath = (0, os_helper_1.resolveTilde)(iconPath);
-        if (!resolvedPath) {
+    getIcon(iconPath) {
+        const substitudedPath = (0, os_helper_1.resolveTilde)(iconPath);
+        if (!substitudedPath) {
             log_1.log.error(`Could not resolve path. Make sure icon ${iconPath} is valid`);
             return undefined;
         }
-        if (!path_1.default.isAbsolute(resolvedPath)) {
-            const parsedSourceDirectory = path_1.default.parse(sourceDirectory).dir;
-            resolvedPath = path_1.default.join(parsedSourceDirectory, resolvedPath);
-            if (!(0, fs_1.existsSync)(resolvedPath)) {
-                log_1.log.error(`Could not find icon: ${resolvedPath}`);
-                return undefined;
-            }
+        const resolvedPath = (0, fs_helper_1.resolvePATH)(substitudedPath);
+        if (!resolvedPath) {
+            log_1.log.error(`Could not resolve path. Make sure icon ${substitudedPath} is valid`);
+            return undefined;
         }
-        if (!iconPath.endsWith('.png') && !iconPath.endsWith('.icns')) {
+        if (!resolvedPath.endsWith('.png') && !resolvedPath.endsWith('.icns')) {
             log_1.log.error(`Invalid icon: ${resolvedPath}. File must be PNG or ICNS`);
             return undefined;
         }
@@ -26127,23 +26074,19 @@ class WindowsHelper {
         }
         return resolvedPath;
     }
-    getIcon(iconPath, sourceDirectory = '') {
-        let resolvedPath = (0, os_helper_1.resolveEnvironmentVariables)(iconPath);
-        if (!resolvedPath) {
+    getIcon(iconPath) {
+        const substitudedPath = (0, os_helper_1.resolveEnvironmentVariables)(iconPath);
+        if (!substitudedPath) {
             log_1.log.error(`Could not resolve path. Make sure icon ${iconPath} is valid`);
             return undefined;
         }
-        if (!path_1.default.win32.isAbsolute(resolvedPath)) {
-            let parsedSourceDirectory = sourceDirectory;
-            if (path_1.default.sep !== '\\') {
-                parsedSourceDirectory = sourceDirectory.split('\\').join('/');
-                resolvedPath = resolvedPath.split('\\').join('/');
-            }
-            parsedSourceDirectory = path_1.default.parse(parsedSourceDirectory).dir;
-            resolvedPath = path_1.default.join(parsedSourceDirectory, resolvedPath);
+        const resolvedPath = (0, fs_helper_1.resolvePATH)(substitudedPath);
+        if (!resolvedPath) {
+            log_1.log.error(`Could not resolve path. Make sure icon ${substitudedPath} is valid`);
+            return undefined;
         }
         const iconPattern = /^.*(?:\.exe|\.ico|\.dll)(?:,\d*)?$/m;
-        if (!RegExp(iconPattern).test(iconPath)) {
+        if (!RegExp(iconPattern).test(resolvedPath)) {
             log_1.log.error('Windows ICON must be ICO, EXE, or DLL File. It may be followed by a comma and icon index value, like: "C:\\file.exe,0"');
             return undefined;
         }
@@ -26154,9 +26097,6 @@ class WindowsHelper {
             const cleaned = extension.split(',')[0];
             // 'C:\\file.dll,0' => 'C:\\file.dll'
             return icon.replace(extension, cleaned);
-        }
-        if (!resolvedPath) {
-            return undefined;
         }
         if (!(0, fs_1.existsSync)(removeIconIndex(resolvedPath))) {
             log_1.log.error(`Could not find icon: ${resolvedPath}`);

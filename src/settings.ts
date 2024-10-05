@@ -13,6 +13,5 @@ export interface ISettings {
   workingDirectory?: string
   vbsPath?: string
   type?: LinuxType
-  terminal?: boolean
   chmod?: boolean
 }

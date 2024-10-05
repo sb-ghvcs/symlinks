@@ -1,5 +1,4 @@
 import { existsSync, lstatSync } from 'fs'
-import path from 'path'
 import { resolvePATH } from '../fs-helper'
 import { log } from '../log'
 import { IOsHelper, resolveTilde } from './os-helper'
@@ -37,23 +36,21 @@ export class LinuxHelper implements IOsHelper {
     return resolvedPath
   }
 
-  getIcon(iconPath: string, sourceDirectory = ''): string | undefined {
-    let resolvedPath = resolveTilde(iconPath)
-    if (!resolvedPath) {
+  getIcon(iconPath: string): string | undefined {
+    const substitudedPath = resolveTilde(iconPath)
+    if (!substitudedPath) {
       log.error(`Could not resolve path. Make sure icon ${iconPath} is valid`)
       return undefined
     }
-
-    if (!path.isAbsolute(resolvedPath)) {
-      const parsedSourceDirectory = path.parse(sourceDirectory).dir
-      resolvedPath = path.join(parsedSourceDirectory, resolvedPath)
-      if (!existsSync(resolvedPath)) {
-        log.error(`Could not find icon: ${resolvedPath}`)
-        return undefined
-      }
+    const resolvedPath = resolvePATH(substitudedPath)
+    if (!resolvedPath) {
+      log.error(
+        `Could not resolve path. Make sure icon ${substitudedPath} is valid`
+      )
+      return undefined
     }
 
-    if (!iconPath.endsWith('.png') && !iconPath.endsWith('.icns')) {
+    if (!resolvedPath.endsWith('.png') && !resolvedPath.endsWith('.icns')) {
       log.error(`Invalid icon: ${resolvedPath}. File must be PNG or ICNS`)
       return undefined
     }
