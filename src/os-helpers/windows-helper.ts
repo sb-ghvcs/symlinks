@@ -20,24 +20,23 @@ export class WindowsHelper implements IOsHelper {
     return resolvedPath
   }
 
-  getIcon(iconPath: string, sourceDirectory = ''): string | undefined {
-    let resolvedPath = resolveEnvironmentVariables(iconPath)
-    if (!resolvedPath) {
+  getIcon(iconPath: string): string | undefined {
+    const substitudedPath = resolveEnvironmentVariables(iconPath)
+    if (!substitudedPath) {
       log.error(`Could not resolve path. Make sure icon ${iconPath} is valid`)
       return undefined
     }
 
-    if (!path.win32.isAbsolute(resolvedPath)) {
-      let parsedSourceDirectory = sourceDirectory
-      if (path.sep !== '\\') {
-        parsedSourceDirectory = sourceDirectory.split('\\').join('/')
-        resolvedPath = resolvedPath.split('\\').join('/')
-      }
-      parsedSourceDirectory = path.parse(parsedSourceDirectory).dir
-      resolvedPath = path.join(parsedSourceDirectory, resolvedPath)
+    const resolvedPath = resolvePATH(substitudedPath)
+    if (!resolvedPath) {
+      log.error(
+        `Could not resolve path. Make sure icon ${substitudedPath} is valid`
+      )
+      return undefined
     }
+
     const iconPattern = /^.*(?:\.exe|\.ico|\.dll)(?:,\d*)?$/m
-    if (!RegExp(iconPattern).test(iconPath)) {
+    if (!RegExp(iconPattern).test(resolvedPath)) {
       log.error(
         'Windows ICON must be ICO, EXE, or DLL File. It may be followed by a comma and icon index value, like: "C:\\file.exe,0"'
       )
@@ -53,9 +52,6 @@ export class WindowsHelper implements IOsHelper {
       return icon.replace(extension, cleaned)
     }
 
-    if (!resolvedPath) {
-      return undefined
-    }
     if (!existsSync(removeIconIndex(resolvedPath))) {
       log.error(`Could not find icon: ${resolvedPath}`)
       return undefined

@@ -2,7 +2,6 @@ import * as core from '@actions/core'
 import { ISettings, LinuxType, WindowMode } from './settings'
 import { WindowsHelper } from './os-helpers/windows-helper'
 import { LinuxHelper } from './os-helpers/linux-helper'
-import { getParentDirectory } from './fs-helper'
 import { lstatSync } from 'fs'
 import { isLinux, isWindows } from '@actions/core/lib/platform'
 import path from 'path'
@@ -42,12 +41,11 @@ class InputHelper {
       windowsHelper.getResolvedPath(destinationDirectory)
     result.destinationDirectory = validatedDestinationDirectory
 
-    const sourceDirectory = getParentDirectory(validatedSourcePath)
     const iconPath = core.getInput('icon-path')
     if (iconPath.length === 0) {
       result.iconPath = undefined
     } else {
-      const validatedIconPath = windowsHelper.getIcon(iconPath, sourceDirectory)
+      const validatedIconPath = windowsHelper.getIcon(iconPath)
       result.iconPath = validatedIconPath
     }
 
@@ -102,16 +100,14 @@ class InputHelper {
       linuxHelper.getResolvedPath(destinationDirectory)
     result.destinationDirectory = validatedDestinationDirectory
 
-    const sourceDirectory = getParentDirectory(validatedSourcePath)
     const iconPath = core.getInput('icon-path')
     if (iconPath.length === 0) {
       result.iconPath = undefined
     } else {
-      const validatedIconPath = linuxHelper.getIcon(iconPath, sourceDirectory)
+      const validatedIconPath = linuxHelper.getIcon(iconPath)
       result.iconPath = validatedIconPath
     }
     result.type = linuxHelper.getType(validatedSourcePath, shortcutType)
-    result.terminal = core.getBooleanInput('terminal')
     result.chmod = core.getBooleanInput('chmod')
     return result
   }

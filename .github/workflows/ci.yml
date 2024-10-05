@@ -107,6 +107,7 @@ jobs:
         with:
           source-path: ./test.txt
           destination-directory: ../
+          icon-path: ./test-icon.ico
 
       - name: Test Symlink
         id: test-symlink
